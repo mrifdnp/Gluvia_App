@@ -158,7 +158,9 @@ fun TrackScreen(
                 // Area Footer (Tombol Kembali)
                 TrackFooter(onBackToHome = onBackToHome)}
 
-            WaveShapeBackground(color= AuthDarkGreen)
+            WaveShapeBackground( color = AuthDarkGreen,
+                waveColor = LinkColor, // ✅ Output: Gelombang Hijau Muda
+                )
             }
 
 

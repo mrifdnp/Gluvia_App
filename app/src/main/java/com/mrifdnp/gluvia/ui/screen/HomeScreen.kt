@@ -192,14 +192,15 @@ fun FeatureCardItem(card: FeatureCard, onClick: () -> Unit) {
 
 // Re-use WaveShapeBackground (Ganti nama AuthFooter agar lebih generik)
 @Composable
-fun WaveShapeBackground(color: Color, modifier: Modifier = Modifier) {
+fun WaveShapeBackground(color: Color,waveColor: Color,
+                         modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .fillMaxWidth()
             .fillMaxHeight(0.3f)
-            .background(AuthDarkGreen)
+            .background(color)
             .background(
-                color = Color.White,
+                color = waveColor,
                 shape = WaveShape() // Gunakan WaveShape yang sudah Anda definisikan
             )
 
