@@ -27,6 +27,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 
@@ -43,7 +44,7 @@ fun GluviaScreen(onNextClick: () -> Unit) {
             GluviaHeader(
                 onMenuClick = {
                     // Aksi saat tombol menu diklik
-                }
+                }, showLogo = false
             )
         },
         // Scaffold secara otomatis menyediakan padding untuk topBar
@@ -85,22 +86,26 @@ fun GluviaScreen(onNextClick: () -> Unit) {
 
 
 @Composable
-fun GluviaHeader(onMenuClick: () -> Unit) {
+fun GluviaHeader(
+    onMenuClick: () -> Unit,
+    showTitle: Boolean = true, // <-- Kontrol visibilitas Title (Gluvia)
+    showLogo: Boolean = true,  // <-- Kontrol visibilitas Logo
+    logoResId: Int = R.drawable.logo_sma // <-- Ganti dengan R.drawable.logo_sma atau logo yang sesuai
+) {
     // Gunakan Column untuk menumpuk Status Bar Spacer dan Row Header
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(DarkGreen) // Beri warna DarkGreen pada seluruh area Header
+            .background(DarkGreen)
     ) {
         // PERBAIKAN: Spacer ini memberikan tinggi yang dibutuhkan untuk Status Bar
         Spacer(
             modifier = Modifier
                 .fillMaxWidth()
                 .windowInsetsTopHeight(WindowInsets.statusBars)
-            // Warna sudah diatur oleh Column induk, tapi bisa ditambahkan lagi jika perlu
         )
 
-        // Konten utama Header (Gluvia: dan Ikon Menu)
+        // Konten utama Header (Logo, Teks, dan Ikon Menu)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -108,19 +113,40 @@ fun GluviaHeader(onMenuClick: () -> Unit) {
                 .padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = "Gluvia",
-                color = White,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.weight(1f)
-            )
-            IconButton(onClick = onMenuClick) {
-                Icon(
-                    imageVector = Icons.Filled.Menu,
-                    contentDescription = "Menu",
-                    tint = White
-                )
+
+            // 1. KIRI: Title/Text (Mengambil 1f ruang)
+            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+                if (showTitle) {
+                    Text(
+                        text = "Gluvia",
+                        color = White,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
+
+
+            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                if (showLogo) {
+                    Image(
+                        painter = painterResource(id = logoResId),
+                        contentDescription = "Logo Aplikasi",
+                        modifier = Modifier.size(40.dp),
+                        contentScale = ContentScale.Fit
+                    )
+                }
+            }
+
+            // 3. KANAN: Menu Icon (Mengambil 1f ruang)
+            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterEnd) {
+                IconButton(onClick = onMenuClick) {
+                    Icon(
+                        imageVector = Icons.Filled.Menu,
+                        contentDescription = "Menu",
+                        tint = White
+                    )
+                }
             }
         }
     }

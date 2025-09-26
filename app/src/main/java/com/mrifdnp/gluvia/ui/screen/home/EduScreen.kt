@@ -37,7 +37,7 @@ fun EduScreen(
         topBar = {
             // Re-use GluviaHeader. Kita bisa menggunakan onBackClick untuk tombol menu, atau
             // membuat header khusus dengan tombol back. Untuk sederhana, kita pakai tombol Menu
-            GluviaHeader(onMenuClick = onBackClick)
+            GluviaHeader(onMenuClick = onBackClick, showTitle = false)
         },
         containerColor = AuthDarkGreen // Warna background hijau penuh sesuai mockup
     ) { paddingValues ->

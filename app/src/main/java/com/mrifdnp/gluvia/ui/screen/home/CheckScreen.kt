@@ -42,7 +42,7 @@ fun CheckScreen(
     Scaffold(
         topBar = {
             // Re-use GluviaHeader. Gunakan onBackToHome untuk tombol menu/kembali
-            GluviaHeader(onMenuClick = onBackToHome)
+            GluviaHeader(onMenuClick = onBackToHome, showTitle = false)
         },
         containerColor = AuthDarkGreen // Warna background hijau penuh
     ) { paddingValues ->

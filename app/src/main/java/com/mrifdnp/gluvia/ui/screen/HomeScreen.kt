@@ -59,7 +59,11 @@ fun HomeScreen(
     viewModel: HomeViewModel = viewModel(),onLogout: () -> Unit,onFeatureClick: (route: String) -> Unit
 ) {
     Scaffold(
-        topBar = { GluviaHeader(onMenuClick = onLogout) },
+        topBar = {  GluviaHeader(
+            onMenuClick = onLogout,
+            showTitle = false,
+            showLogo = true // Bisa dihilangkan karena defaultnya true
+        ) },
         containerColor = White
     ) { paddingValues ->
         val layoutDirection = LocalLayoutDirection.current

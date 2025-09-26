@@ -83,7 +83,7 @@ enum class AuthScreenState {
 fun AuthScreen(onNavigateToHome: () -> Unit = {}, ) {
     var currentScreenState by remember { mutableStateOf(AuthScreenState.SIGN_UP_OPTIONS) }
     Scaffold(
-        topBar = { GluviaHeader(onMenuClick = {}) },
+        topBar = { GluviaHeader(onMenuClick = {}, showLogo = false) },
         containerColor = White
     ) { paddingValues ->
 

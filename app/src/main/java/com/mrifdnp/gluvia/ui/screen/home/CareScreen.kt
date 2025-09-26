@@ -30,7 +30,7 @@ fun CareScreen(
     Scaffold(
         topBar = {
             // Re-use GluviaHeader. Tombol menu/kembali berfungsi untuk kembali ke Home
-            GluviaHeader(onMenuClick = onBackToHome)
+            GluviaHeader(onMenuClick = onBackToHome, showTitle = false)
         },
         containerColor = White
     ) { paddingValues ->
