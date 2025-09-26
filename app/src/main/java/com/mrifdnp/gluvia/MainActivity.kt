@@ -19,6 +19,9 @@ import com.mrifdnp.gluvia.ui.screen.home.CheckScreen
 import com.mrifdnp.gluvia.ui.screen.home.EduScreen
 import com.mrifdnp.gluvia.ui.screen.home.TrackScreen
 import com.mrifdnp.gluvia.ui.theme.GluviaTheme
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 
 
 class MainActivity : ComponentActivity() {
@@ -42,71 +45,101 @@ const val SCREEN_TRACK = "track"
 const val SCREEN_CARE = "care"
 @Composable
 fun MainNavigation() {
+    // 1. Inisialisasi NavController
+    val navController = rememberNavController()
 
-    var currentScreen by rememberSaveable { mutableStateOf(SCREEN_HOME) }
+    // 2. Definisi Callback yang menggunakan NavController
 
-    // --- CALLBACK HANDLERS ---
+    // Callback umum untuk berpindah ke rute fitur
     val onFeatureClick: (route: String) -> Unit = { route ->
-        currentScreen = route // <-- Mengubah layar ke rute yang diklik (misal: "edu")
+        // Navigasi sederhana ke rute tujuan
+        navController.navigate(route)
     }
-    // 1. Onboarding Selesai -> Pergi ke Auth Screen
+
+    // Onboarding Selesai -> Pergi ke Auth Screen
     val onOnboardFinish: () -> Unit = {
-        currentScreen = SCREEN_AUTH
+        navController.navigate(SCREEN_AUTH) {
+            // Hapus Onboarding dari back stack setelah selesai
+            popUpTo(SCREEN_ONBOARDING) { inclusive = true }
+        }
     }
 
-    // 2. Pendaftaran Selesai -> Pergi ke Home Screen
+    // Pendaftaran Selesai -> Pergi ke Home Screen
     val onAuthSuccess: () -> Unit = {
-        currentScreen = SCREEN_HOME
+        navController.navigate(SCREEN_HOME) {
+            // Hapus Auth dari back stack (mencegah kembali ke Auth setelah login)
+            popUpTo(SCREEN_AUTH) { inclusive = true }
+        }
     }
 
-    // 3. Logout/Kembali -> Pergi ke Auth Screen
+    // Logout -> Pergi ke Auth Screen
     val onLogout: () -> Unit = {
-        currentScreen = SCREEN_AUTH
+        navController.navigate(SCREEN_AUTH) {
+            // Hapus semua layar di back stack di atas Auth
+            popUpTo(SCREEN_AUTH) { inclusive = true }
+        }
+    }
+
+    // Handler untuk Tombol Kembali di Sub-Layar
+    // Ini akan kembali ke layar sebelumnya (Edu -> Home, Check -> Edu, dll.)
+    val onBack: () -> Unit = {
+        navController.popBackStack()
     }
 
 
-    // --- KONTROL NAVIGASI ---
-    when (currentScreen) {
+    // --- KONTROL NAVIGASI MENGGUNAKAN NavHost ---
+    NavHost(
+        navController = navController,
+        // Ganti ke SCREEN_AUTH atau SCREEN_ONBOARDING untuk alur awal yang benar
+        startDestination = SCREEN_HOME
+    ) {
 
-        SCREEN_ONBOARDING -> {
-            // Asumsi: GluviaScreen adalah layar Onboarding Anda
+        // 1. SCREEN_ONBOARDING
+        composable(SCREEN_ONBOARDING) {
             GluviaScreen(onNextClick = onOnboardFinish)
         }
 
-        SCREEN_AUTH -> {
-            // Tampilkan Auth Screen
+        // 2. SCREEN_AUTH
+        composable(SCREEN_AUTH) {
             AuthScreen(onNavigateToHome = onAuthSuccess)
         }
 
-        SCREEN_HOME -> {
-            // Tampilkan Home Screen
-            // Berikan callback logout jika ada
+        // 3. SCREEN_HOME
+        composable(SCREEN_HOME) {
             HomeScreen(onLogout = onLogout, onFeatureClick = onFeatureClick)
         }
-        SCREEN_EDU -> {
+
+        // 4. SCREEN_EDU
+        composable(SCREEN_EDU) {
             EduScreen(
-                onBackClick = { currentScreen = SCREEN_HOME }, // Kembali ke Home
+                onBackClick = onBack, // Kembali ke layar sebelumnya (Home)
                 onWatchVideoClick = { /* Aksi buka video */ }
             )
         }
-        SCREEN_CHECK -> {
+
+        // 5. SCREEN_CHECK
+        composable(SCREEN_CHECK) {
             CheckScreen(
-                onBackToHome = { currentScreen = SCREEN_HOME }, // Kembali ke Home
-                onNavigateToCare = { currentScreen = "care" } // Rute ke Gluvi-Care
+                onBackToHome = onBack, // Kembali ke layar sebelumnya (Home)
+                onNavigateToCare = { navController.navigate(SCREEN_CARE) } // Navigasi ke Care
             )
         }
-        SCREEN_TRACK -> {
+
+        // 6. SCREEN_TRACK
+        composable(SCREEN_TRACK) {
             TrackScreen(
-                onBackToHome = { currentScreen = SCREEN_HOME } // Kembali ke Home
+                onBackToHome = onBack // Kembali ke layar sebelumnya (Home)
             )
         }
-        SCREEN_CARE -> {
+
+        // 7. SCREEN_CARE
+        composable(SCREEN_CARE) {
             CareScreen(
-                onBackToHome = { currentScreen = SCREEN_HOME }, // Kembali ke Home
+                onBackToHome = onBack, // Kembali ke layar sebelumnya (Home atau Check)
                 onCountySelected = { county ->
-                    // Logika untuk mencari Faskes berdasarkan kabupaten
                     println("Mencari fasilitas di: $county")
-                    // currentScreen = SCREEN_FASKES_RESULT (Jika ada layar hasil)
+                    // Contoh: Navigasi ke halaman hasil dengan argumen
+                    // navController.navigate("faskes_result/$county")
                 }
             )
         }

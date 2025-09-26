@@ -60,5 +60,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.3")
     implementation ("com.github.MahmoudIbrahim3:android-compose-charts:1.2.2")
     implementation("com.github.tehras:charts:0.2.4-alpha")
+// TAMBAHKAN KEMBALI:
+    implementation("androidx.navigation:navigation-compose:2.7.7")
 
 }
