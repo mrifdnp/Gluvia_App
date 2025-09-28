@@ -1,6 +1,6 @@
 package com.mrifdnp.gluvia
 
-import AuthScreen
+
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -22,6 +22,11 @@ import com.mrifdnp.gluvia.ui.theme.GluviaTheme
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.mrifdnp.gluvia.ui.screen.menu.ProfileScreen
+import com.mrifdnp.gluvia.ui.screen.AuthScreen
+import com.mrifdnp.gluvia.ui.viewmodel.AppState
+import com.mrifdnp.gluvia.ui.viewmodel.MainViewModel
+import org.koin.androidx.compose.koinViewModel
 
 
 class MainActivity : ComponentActivity() {
@@ -43,8 +48,28 @@ const val SCREEN_EDU = "edu"
 const val SCREEN_CHECK = "check"
 const val SCREEN_TRACK = "track"
 const val SCREEN_CARE = "care"
+const val SCREEN_PROFILE = "profile_route"
+
+
 @Composable
-fun MainNavigation() {
+fun MainNavigation(mainViewModel: MainViewModel = koinViewModel()) { // 🔑 Inject MainViewModel
+
+    // 🔑 Ambil state otentikasi
+    val appState = mainViewModel.appState
+
+    // 🔑 Tentukan rute awal dinamis (nullable)
+    val startDestination: String? = when(appState) {
+        AppState.UNAUTHENTICATED -> SCREEN_AUTH
+        AppState.AUTHENTICATED -> SCREEN_HOME
+        null -> null // Kasus ini akan digunakan saat state masih dimuat (Loading)
+    }
+    if (startDestination == null) {
+        // Tampilkan Loading Spinner atau Splash Screen Anda di sini
+        // Contoh:
+        // LoadingScreen()
+        return // Hentikan Composisi hingga startDestination ditentukan
+    }
+
     // 1. Inisialisasi NavController
     val navController = rememberNavController()
 
@@ -91,7 +116,7 @@ fun MainNavigation() {
     NavHost(
         navController = navController,
         // Ganti ke SCREEN_AUTH atau SCREEN_ONBOARDING untuk alur awal yang benar
-        startDestination = SCREEN_HOME
+        startDestination = startDestination
     ) {
 
         // 1. SCREEN_ONBOARDING
@@ -141,6 +166,12 @@ fun MainNavigation() {
                     // Contoh: Navigasi ke halaman hasil dengan argumen
                     // navController.navigate("faskes_result/$county")
                 }
+            )
+        }
+        composable(SCREEN_PROFILE) {
+            ProfileScreen(
+                onBackClick = { navController.popBackStack() },
+                onEditProfileClick = { /* Navigasi ke Edit Screen */ }
             )
         }
     }

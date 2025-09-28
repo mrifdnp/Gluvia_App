@@ -1,3 +1,6 @@
+package com.mrifdnp.gluvia.ui.screen
+
+
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.togetherWith
@@ -63,21 +66,24 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.mrifdnp.gluvia.ui.viewmodel.SignInViewModel
 import com.mrifdnp.gluvia.ui.viewmodel.SignUpViewModel
+import org.koin.androidx.compose.koinViewModel
 
 // Warna yang digunakan (mengambil dari definisi Anda sebelumnya)
-val AuthDarkGreen = Color(0xFF016d54)
+
 val LinkColor = Color(0xFF389F77)
 val ButtonColor = Color(0xFFF1F1F1)
-val White = Color(0xFFFFFFFF)
-val Black = Color(0xFF000000)
+
 
 
 
 enum class AuthScreenState {
     SIGN_UP_OPTIONS,
-    SIGN_UP_FORM
+    SIGN_UP_FORM,
+    SIGN_IN_FORM
 }
+
 
 @Composable
 fun AuthScreen(onNavigateToHome: () -> Unit = {}, ) {
@@ -122,12 +128,24 @@ fun AuthScreen(onNavigateToHome: () -> Unit = {}, ) {
                             onGoogleSignUpClick = {
                                 // Contoh: langsung ke form atau ke proses Google
                                 currentScreenState = AuthScreenState.SIGN_UP_FORM
+                            },
+                            onLoginClick = {
+                                currentScreenState = AuthScreenState.SIGN_IN_FORM
                             }
+
                         )
                     }
                     AuthScreenState.SIGN_UP_FORM -> {
                         // ViewModel secara otomatis disediakan oleh viewModel()
                         SignUpFormContent(
+                            onBackToOptions = {
+                                currentScreenState = AuthScreenState.SIGN_UP_OPTIONS
+                            },
+                            onNavigateToHome = onNavigateToHome
+                        )
+                    }
+                    AuthScreenState.SIGN_IN_FORM -> {
+                        SignInFormContent(
                             onBackToOptions = {
                                 currentScreenState = AuthScreenState.SIGN_UP_OPTIONS
                             },
@@ -148,14 +166,15 @@ fun AuthScreen(onNavigateToHome: () -> Unit = {}, ) {
 fun AuthContent(
     modifier: Modifier = Modifier,
     onEmailSignUpClick: () -> Unit, // Handler klik Email
-    onGoogleSignUpClick: () -> Unit // Handler klik Google
+    onGoogleSignUpClick: () -> Unit,
+    onLoginClick: () -> Unit
 ) {
     val scrollState = rememberScrollState()
     Column(
         modifier = modifier
             .fillMaxWidth()
             .verticalScroll(scrollState)
-    ,
+        ,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Spacer(modifier = Modifier.height(32.dp))
@@ -189,7 +208,8 @@ fun AuthContent(
             },
             modifier = Modifier
                 .padding(bottom = 48.dp)
-                .clickable { /* Aksi navigasi Log in */ }
+                // 🔑 Panggil handler login di sini
+                .clickable { onLoginClick() }
         )
 
 
@@ -221,10 +241,98 @@ fun AuthContent(
         )
     }
 }
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SignUpFormContent(onBackToOptions: () -> Unit,  onNavigateToHome: () -> Unit,   viewModel: SignUpViewModel = viewModel()
+fun SignInFormContent(onBackToOptions: () -> Unit, onNavigateToHome: () -> Unit, viewModel: SignInViewModel = koinViewModel()) {
+
+    // Inisialisasi onNavigateToHome dari Composable
+    LaunchedEffect(Unit) {
+        viewModel.onNavigateToHome = onNavigateToHome
+    }
+
+    val scrollState = rememberScrollState()
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .verticalScroll(scrollState)
+            .padding(horizontal = 32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Spacer(modifier = Modifier.height(24.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Start
+        ) {
+            TextButton(
+                onClick = onBackToOptions,
+                colors = ButtonDefaults.textButtonColors(contentColor = LinkColor),
+                contentPadding = PaddingValues(0.dp)
+            ) {
+                Text("← Kembali")
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            text = "Masuk ke Akun",
+            color = AuthDarkGreen,
+            fontSize = 28.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp)
+        )
+
+        // --- FIELD: EMAIL ---
+        OutlinedTextField(
+            value = viewModel.emailValue,
+            onValueChange = viewModel::onEmailChange,
+            label = { Text("Email") },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // --- FIELD: PASSWORD ---
+        OutlinedTextField(
+            value = viewModel.passwordValue,
+            onValueChange = viewModel::onPasswordChange,
+            label = { Text("Password") },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
+            visualTransformation = PasswordVisualTransformation(), // Anda bisa tambahkan toggle visibilitas di sini juga
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(modifier = Modifier.height(32.dp))
+
+        // 🔑 TAMPILKAN ERROR
+        if (viewModel.errorMessage != null) {
+            Text(
+                text = viewModel.errorMessage!!,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+        }
+
+        // --- TOMBOL LOGIN ---
+        Button(
+            onClick = viewModel::onSignInClicked, // Panggil logika login
+            enabled = !viewModel.isLoading, // Nonaktifkan saat loading
+            modifier = Modifier.fillMaxWidth().height(50.dp)
+        ) {
+            if (viewModel.isLoading) {
+                CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+            } else {
+                Text("MASUK", fontWeight = FontWeight.Bold)
+            }
+        }
+
+        Spacer(modifier = Modifier.height(32.dp))
+    }
+}
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SignUpFormContent(onBackToOptions: () -> Unit,  onNavigateToHome: () -> Unit,       viewModel: SignUpViewModel = koinViewModel()
+
 ) { LaunchedEffect(Unit) {
     viewModel.onNavigateToHome = onNavigateToHome
 }

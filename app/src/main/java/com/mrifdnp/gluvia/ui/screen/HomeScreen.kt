@@ -3,8 +3,7 @@ package com.mrifdnp.gluvia.ui.screen
 // --- File: HomeScreen.kt ---
 
 
-import AuthDarkGreen
-import AuthFooter
+
 import FeatureCard
 import HomeViewModel
 
@@ -73,6 +72,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import kotlinx.coroutines.launch
+import org.koin.androidx.compose.koinViewModel
 
 
 val AuthDarkGreen = Color(0xFF016d54)
@@ -80,7 +80,10 @@ val AuthDarkGreen = Color(0xFF016d54)
 @Composable
 fun HomeScreen(
     // Inject ViewModel
-    viewModel: HomeViewModel = viewModel(),onLogout: () -> Unit,onFeatureClick: (route: String) -> Unit
+    viewModel: HomeViewModel = koinViewModel(),
+    onLogout: () -> Unit,
+    onFeatureClick: (route: String) -> Unit
+
 ) {  val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 
@@ -100,7 +103,11 @@ fun HomeScreen(
                         onCloseDrawer = { scope.launch { drawerState.close() } },
                         onNavigate = { route ->
                             scope.launch { drawerState.close() }
-                            onFeatureClick(route)
+                            if (route == "logout_route") {
+                                viewModel.onLogoutClicked(onLogout) // Panggil VM, teruskan onLogout
+                            } else {
+                                onFeatureClick(route) // Navigasi fitur normal
+                            }
                         }
                     )
                 }
@@ -142,8 +149,7 @@ fun HomeScreen(
                 )
             }
 
-            // Footer (Gunakan WaveShape yang sama dari AuthScreen)
-            // Di sini kita ubah Modifier.fillMaxHeight(0.3f) ke tinggi yang lebih rendah
+
             AuthFooter()
         }
     }
@@ -161,11 +167,11 @@ fun HomeDrawerContent(
     Column(
         modifier = Modifier
             .fillMaxHeight()
-            .fillMaxWidth() // Lebar menu 70% layar
+            .fillMaxWidth()
             .padding(vertical = 32.dp),
     ) {
 
-        // 1. Tombol Close (X) dan Notifikasi (Asumsi: diimplementasikan di sini)
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -173,29 +179,29 @@ fun HomeDrawerContent(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Placeholder Notifikasi (Icon Bell)
+
             Icon(
-                // Ganti dengan Icons.Filled.Notifications atau ikon yang sesuai
+
                 imageVector = Icons.Filled.Notifications,
                 contentDescription = "Notifications",
                 tint = White,
                 modifier = Modifier.size(24.dp)
             )
-            // B. Tengah: Dropdown Menu (Pilih Opsi)
-            Box { // Box menampung ikon dan menu
+
+            Box {
                 Row(
                     modifier = Modifier.clickable { isDropdownExpanded = true }, // Memicu menu
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Ikon Profile/Avatar Placeholder
+
                     Icon(
-                        // Ganti dengan ikon avatar yang sesuai (Icons.Filled.Person atau R.drawable.avatar)
+
                         imageVector = Icons.Filled.Person,
                         contentDescription = "Profile",
                         tint = White,
                         modifier = Modifier.size(24.dp)
                     )
-                    // Ikon Panah Dropdown
+
                     Icon(
                         imageVector = Icons.Filled.KeyboardArrowDown,
                         contentDescription = "Pilih Opsi",
@@ -204,15 +210,14 @@ fun HomeDrawerContent(
                     )
                 }
 
-                // Dropdown Menu yang Sebenarnya
+
 
                 DropdownMenu(
                     expanded = isDropdownExpanded,
-                    onDismissRequest = { isDropdownExpanded = false }, // Tutup saat klik di luar
-                    // Atur warna dan bentuk sesuai mockup Anda (Opsional)
+                    onDismissRequest = { isDropdownExpanded = false },
                     modifier = Modifier.background(White)
                 ) {
-                    // 1. Judul Dropdown
+
                     Text(
                         text = "Pilih Opsi",
                         fontWeight = FontWeight.Bold,
@@ -229,30 +234,30 @@ fun HomeDrawerContent(
                         text = { Text("Setting Akun", color = Black) },
                         onClick = {
                             isDropdownExpanded = false
-                            onNavigate("settings_route") // Ganti dengan rute yang sesuai
+                            onNavigate("settings_route")
                         }
                     )
 
-                    // 3. Profile
+
                     DropdownMenuItem(
                         text = { Text("Profile", color = Black) },
                         onClick = {
                             isDropdownExpanded = false
-                            onNavigate("profile_route") // Ganti dengan rute yang sesuai
+                            onNavigate("profile_route")
                         }
                     )
 
-                    // 4. Log Out
+
                     DropdownMenuItem(
                         text = { Text("Log Out", color = Black) },
                         onClick = {
                             isDropdownExpanded = false
-                            onNavigate("logout_route") // Anda harus memiliki logika logout di MainActivity
+                            onNavigate("logout_route")
                         }
                     )
                 }
             }
-            // Tombol Close (X)
+
             IconButton(onClick = onCloseDrawer) {
                 Icon(
                     imageVector = Icons.Filled.Close,
@@ -262,7 +267,7 @@ fun HomeDrawerContent(
             }
         }
 
-        // 2. Judul "Main Menu"
+
         Text(
             text = "Main Menu",
             color = White,
@@ -274,10 +279,10 @@ fun HomeDrawerContent(
                 .padding(horizontal = 16.dp, vertical = 24.dp)
         )
 
-        // Garis Pemisah Setelah Judul
+
         Divider(color = White, thickness = 2.dp, modifier = Modifier.padding(horizontal = 16.dp))
 
-        // 3. Item Navigasi Fitur
+
         featureRoutes.forEach { (title, route) ->
             Column {
                 NavigationDrawerItem(
@@ -289,30 +294,29 @@ fun HomeDrawerContent(
                             fontWeight = FontWeight.SemiBold
                         )
                     },
-                    selected = false, // Atur state terpilih jika Anda menggunakan rute saat ini
+                    selected = false,
                     onClick = { onNavigate(route) },
                     modifier = Modifier.padding(horizontal = 16.dp),
                     colors = NavigationDrawerItemDefaults.colors(
-                        // Atur warna item agar sesuai background
                         unselectedContainerColor = AuthDarkGreen,
                         selectedContainerColor = AuthDarkGreen.copy(alpha = 0.8f)
                     )
                 )
-                // Garis Pemisah Antar Item
+
                 Divider(color = White, thickness = 2.dp, modifier = Modifier.padding(horizontal = 16.dp))
             }
         }
 
-        // 4. Tambahan (misalnya Logout atau Pengaturan)
+
         Spacer(modifier = Modifier.height(16.dp))
-        // ...
+
     }
 }
-// ---
+
 
 @Composable
 fun HomeHeader(userName: String) {
-    // Area Header Hijau (Menggantikan wave dari AuthScreen)
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -343,31 +347,31 @@ fun HomeHeader(userName: String) {
     }
 }
 
-// ---
+
 
 @Composable
-fun FeatureGrid(featureList: List<FeatureCard>, onCardClick: (route: String) -> Unit) { // <-- Ganti nama parameter di sini
+fun FeatureGrid(featureList: List<FeatureCard>, onCardClick: (route: String) -> Unit) {
     LazyVerticalGrid(
-        columns = GridCells.Fixed(2), // 2 Kolom per baris
+        columns = GridCells.Fixed(2),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         modifier = Modifier.fillMaxSize()
     ) {
-        // Gunakan nama parameter baru:
+
         GridItems(featureList) { card ->
             FeatureCardItem(card = card, onClick = { onCardClick(card.route) })
         }
     }
 }
 
-// ---
+
 
 @Composable
 fun FeatureCardItem(card: FeatureCard, onClick: () -> Unit) {
     Card(
         modifier = Modifier
-            .aspectRatio(1f) // Membuat kartu berbentuk persegi
+            .aspectRatio(1f)
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = White),
@@ -380,13 +384,13 @@ fun FeatureCardItem(card: FeatureCard, onClick: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Gambar Fitur (Menggunakan ImagePlaceholder/ikon yang sesuai)
+
             Image(
                 painter = painterResource(id = card.iconResId),
                 contentDescription = card.description,
                 contentScale = ContentScale.Fit,
                 modifier = Modifier
-                    .size(80.dp) // Ukuran Ikon/Gambar
+                    .size(80.dp)
                     .padding(bottom = 8.dp)
             )
 
@@ -396,7 +400,7 @@ fun FeatureCardItem(card: FeatureCard, onClick: () -> Unit) {
                 fontSize = 18.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = AuthDarkGreen,
-                // Tambahan: jika ada teks deskripsi, bisa ditambahkan di sini
+
             )
         }
     }

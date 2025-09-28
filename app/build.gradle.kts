@@ -2,6 +2,8 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+
+
 }
 
 android {
@@ -10,7 +12,7 @@ android {
 
     defaultConfig {
         applicationId = "com.mrifdnp.gluvia"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
@@ -60,7 +62,24 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.3")
     implementation ("com.github.MahmoudIbrahim3:android-compose-charts:1.2.2")
     implementation("com.github.tehras:charts:0.2.4-alpha")
-// TAMBAHKAN KEMBALI:
+
+
     implementation("androidx.navigation:navigation-compose:2.7.7")
+
+    implementation(platform(libs.bom))
+    implementation(libs.postgrest.kt)
+    implementation(libs.auth.kt)
+    implementation(libs.realtime.kt)
+    implementation(libs.gotrue.kt)
+
+    //Ktor
+    implementation(libs.ktor.client.android)
+
+    //Koin - Dependency Injection
+    implementation(libs.koin.android)
+    implementation(libs.koin.core)
+    implementation(libs.koin.androidx.compose)
+
+
 
 }

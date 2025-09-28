@@ -5,27 +5,40 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import com.mrifdnp.gluvia.data.AuthRepository
+
+import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-class SignUpViewModel : ViewModel() {
+class SignUpViewModel(private val signUpRepository: AuthRepository) : ViewModel() {
+
+    // Dipanggil dari Composable untuk navigasi setelah sukses
     lateinit var onNavigateToHome: () -> Unit
 
-    // --- Definisi State ---
+    // --- State UI untuk Supabase ---
 
-    // Gunakan StateFlow jika Anda ingin mengelola state di luar composable
-    // Tapi untuk contoh sederhana ini, kita bisa pakai mutableStateOf di ViewModel
+    // State untuk menampilkan spinner loading
+    var isLoading by mutableStateOf(false)
+        private set
+
+    // State untuk menampilkan pesan error ke pengguna
+    var errorMessage by mutableStateOf<String?>(null)
+        private set
+
+    // State untuk menampilkan dialog verifikasi email (opsional, tergantung alur Anda)
+    var showVerificationRequired by mutableStateOf(false)
+        private set
+
+    // --- Definisi State Input ---
     var usernameValue by mutableStateOf("")
         private set
     var emailValue by mutableStateOf("")
         private set
     var passwordValue by mutableStateOf("")
         private set
-
     var isPasswordVisible by mutableStateOf(false)
         private set
 
@@ -52,9 +65,8 @@ class SignUpViewModel : ViewModel() {
 
     val isFormComplete: Boolean
         get() = isUsernameValid && isEmailValid && isPasswordValid &&
-                usernameValue.isNotEmpty() && emailValue.isNotEmpty() &&
-                passwordValue.isNotEmpty() && selectedDate != null
-
+                usernameValue.length >= 4 && emailValue.contains("@") &&
+                passwordValue.length >= 6 && selectedDate != null
     // Helper untuk memformat tanggal
     val dateText: String
         get() {
@@ -63,6 +75,16 @@ class SignUpViewModel : ViewModel() {
                 Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).toLocalDate().format(dateFormatter)
             } ?: "Pilih tanggal"
         }
+    var isOtpSent by mutableStateOf(false)
+        private set
+
+    var otpToken by mutableStateOf("")
+        private set
+
+    // Handler baru untuk input OTP
+    fun onOtpChange(newOtp: String) {
+        otpToken = newOtp.take(6) // Asumsi OTP 6 digit
+    }
 
     // --- Event Handler (Logika Bisnis) ---
 
@@ -90,12 +112,38 @@ class SignUpViewModel : ViewModel() {
         selectedGender = newGender
     }
 
+
     fun onSignUpClicked() {
-        // Logika pendaftaran ke backend/database
-        if (isFormComplete) {
-            println("Pendaftaran berhasil untuk: $usernameValue, $emailValue")
-            if (::onNavigateToHome.isInitialized) {
-                onNavigateToHome() // <-- Pemanggilan di sini
+        // 1. Cek validitas form sebelum memproses
+        if (!isFormComplete) {
+            errorMessage = "Silakan lengkapi semua bidang dengan benar."
+            return
+        }
+
+        // Reset state
+        isLoading = true
+        errorMessage = null
+        // showVerificationRequired = false // Tidak diperlukan lagi
+
+        viewModelScope.launch {
+            // 2. Panggil Repository di background
+            val result = signUpRepository.signUp(
+                email = emailValue,
+                password = passwordValue,
+                fullName = usernameValue
+            )
+
+            // 3. Update UI berdasarkan hasil
+            isLoading = false // Hentikan loading terlepas dari hasilnya
+
+            result.onSuccess {
+                // 🔑 PENANGANAN UTAMA: Langsung navigasi ke Screen Home
+                if (::onNavigateToHome.isInitialized) {
+                    onNavigateToHome()
+                }
+            }.onFailure { exception ->
+                // Pendaftaran gagal
+                errorMessage = exception.message ?: "Terjadi kesalahan yang tidak diketahui saat mendaftar."
             }
         }
     }

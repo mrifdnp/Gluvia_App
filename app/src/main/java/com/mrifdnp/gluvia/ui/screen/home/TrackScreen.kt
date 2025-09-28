@@ -1,7 +1,7 @@
 package com.mrifdnp.gluvia.ui.screen.home
 
 
-import LinkColor
+
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -31,6 +31,7 @@ import com.github.tehras.charts.line.renderer.line.SolidLineDrawer
 
 
 import com.github.tehras.charts.piechart.animation.simpleChartAnimation
+import com.mrifdnp.gluvia.ui.screen.LinkColor
 import com.mrifdnp.gluvia.ui.screen.WaveShapeBackground
 
 

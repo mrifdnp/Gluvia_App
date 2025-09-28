@@ -2,7 +2,10 @@
 
 import androidx.lifecycle.ViewModel
 import androidx.compose.runtime.Immutable
+import androidx.lifecycle.viewModelScope
 import com.mrifdnp.gluvia.R // Pastikan R diimpor
+import com.mrifdnp.gluvia.data.AuthRepository
+import kotlinx.coroutines.launch
 
 @Immutable // Menandakan bahwa data class ini stabil, membantu Compose
 data class FeatureCard(
@@ -12,7 +15,7 @@ data class FeatureCard(
     val route: String // Untuk navigasi
 )
 
-class HomeViewModel : ViewModel() {
+class HomeViewModel(private val authRepository: AuthRepository) : ViewModel() {
     val userName = "Pengguna" // Ganti dengan nama pengguna setelah login
 
     val featureCards = listOf(
@@ -41,4 +44,17 @@ class HomeViewModel : ViewModel() {
             route = "care"
         )
     )
+    fun onLogoutClicked(onNavigateToAuth: () -> Unit) {
+        viewModelScope.launch {
+            // Walaupun Sign Out gagal di server, kita tetap anggap berhasil
+            // di sisi client agar aplikasi bisa lanjut.
+            val result = authRepository.signOut()
+
+            if (result.isSuccess || result.isFailure) {
+                // Selalu navigasi ke layar Auth setelah mencoba sign out,
+                // karena sesi lokal sudah dihapus (atau diasumsikan invalid).
+                onNavigateToAuth()
+            }
+        }
+    }
 }
