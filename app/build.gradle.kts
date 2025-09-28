@@ -3,7 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
 
-
+    id("org.jetbrains.kotlin.plugin.serialization") version "1.9.22"
 }
 
 android {
@@ -81,5 +81,6 @@ dependencies {
     implementation(libs.koin.androidx.compose)
 
 
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0") // Ganti versi jika perlu
 
 }

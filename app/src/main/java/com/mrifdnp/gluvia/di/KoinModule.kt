@@ -3,7 +3,9 @@ package com.mrifdnp.gluvia.di
 import HomeViewModel
 import com.mrifdnp.gluvia.SupabaseClientProvider
 import com.mrifdnp.gluvia.data.AuthRepository
+import com.mrifdnp.gluvia.data.CheckRepository
 import com.mrifdnp.gluvia.data.ProfileRepository
+import com.mrifdnp.gluvia.ui.viewmodel.CheckViewModel
 import com.mrifdnp.gluvia.ui.viewmodel.MainViewModel
 import com.mrifdnp.gluvia.ui.viewmodel.ProfileViewModel
 import com.mrifdnp.gluvia.ui.viewmodel.SignInViewModel
@@ -19,6 +21,7 @@ val appModule = module {
     single { SupabaseClientProvider.client }
     single { AuthRepository(supabaseClient = get()) }
     single { ProfileRepository(supabaseClient = get(), authRepository = get()) }
+    single { CheckRepository(supabaseClient = get(), authRepository = get()) }
 
     // 3. SignUpViewModel (Gunakan factory atau viewModel)
     viewModel { MainViewModel(authRepository = get()) }
@@ -30,5 +33,6 @@ val appModule = module {
         )
     }
     viewModel { ProfileViewModel(profileRepository = get()) }
+    viewModel { CheckViewModel(checkRepository = get()) }
 
 }

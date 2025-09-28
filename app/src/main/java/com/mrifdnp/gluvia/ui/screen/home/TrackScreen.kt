@@ -31,31 +31,36 @@ import com.github.tehras.charts.line.renderer.line.SolidLineDrawer
 
 
 import com.github.tehras.charts.piechart.animation.simpleChartAnimation
+import com.mrifdnp.gluvia.data.MonthlyAverage
 import com.mrifdnp.gluvia.ui.screen.LinkColor
 import com.mrifdnp.gluvia.ui.screen.WaveShapeBackground
+import com.mrifdnp.gluvia.ui.viewmodel.CheckViewModel
+import org.koin.androidx.compose.koinViewModel
 
 
 
-val gluviChartPoints = listOf(
-    LineChartData.Point(100f, "Bln 1"),
-    LineChartData.Point(120f, "Bln 2"),
-    LineChartData.Point(110f, "Bln 3"),
-    LineChartData.Point(102f, "Bln 4"),
-    LineChartData.Point(110f, "Bln 5")
-)
-
-val lineChartData = LineChartData(
-    points = gluviChartPoints,
-
-    lineDrawer = SolidLineDrawer(color = Color(0xFF6ce5e8), thickness = 4.dp),
-)
-
-val chartLabels = gluviChartPoints.map { it.label }
 @Composable
 fun TrackScreen(
-    onBackToHome: () -> Unit
-) {
+    onBackToHome: () -> Unit,
+    viewModel: CheckViewModel = koinViewModel()
 
+) {
+    val monthlyData: List<MonthlyAverage> = viewModel.monthlyChartData
+
+    // 🔑 KONVERSI DATA UNTUK GRAFIK
+    val dynamicChartPoints = monthlyData.map {
+        // Sumbu Y = averageGlucose, Sumbu X Label = monthLabel
+        LineChartData.Point(it.averageGlucose, it.monthLabel)
+    }
+
+    // Siapkan LineChartData
+    val dynamicLineChartData = LineChartData(
+        points = dynamicChartPoints,
+        lineDrawer = SolidLineDrawer(color = Color(0xFF6ce5e8), thickness = 4.dp),
+    )
+
+    // Label sumbu X HANYA berisi nama-nama bulan yang ada di data
+    val dynamicChartLabels = dynamicChartPoints.map { it.label }
 
     Scaffold(
         topBar = {
@@ -126,18 +131,19 @@ fun TrackScreen(
                         ) {
 
 
-                            LineChart(
-
-                                linesChartData = listOf(lineChartData),
-
-
-                                animation = simpleChartAnimation(),
-                                labels = chartLabels,
-
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(horizontal = 16.dp, vertical = 12.dp)
-                            )
+                            if (dynamicChartPoints.isNotEmpty()) { // 🔑 SOLUSI: Cek apakah ada data nyata
+                                LineChart(
+                                    linesChartData = listOf(dynamicLineChartData),
+                                    animation = simpleChartAnimation(),
+                                    labels = dynamicChartLabels,
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                                )
+                            } else {
+                                // Pesan jika data riwayat benar-benar kosong
+                                Text("Belum ada data riwayat glukosa yang tersimpan.", color = Black)
+                            }
                         }
 
 

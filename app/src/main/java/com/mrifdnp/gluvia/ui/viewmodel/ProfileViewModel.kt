@@ -2,6 +2,7 @@
 
 package com.mrifdnp.gluvia.ui.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -32,6 +33,11 @@ class ProfileViewModel(private val profileRepository: ProfileRepository) : ViewM
 
     val profileImageResId = com.mrifdnp.gluvia.R.drawable.sakuchang // Placeholder
 
+    var calculatedGlukosa by mutableStateOf<Float?>(null)
+        private set
+    var isCalculated by mutableStateOf(false)
+        private set
+
     init {
         loadUserProfile()
     }
@@ -56,6 +62,7 @@ class ProfileViewModel(private val profileRepository: ProfileRepository) : ViewM
                 } ?: "Tidak diketahui"
 
             }.onFailure { e ->
+                Log.e("ProfileViewModel", "Gagal memuat profil Supabase. Pesan: ${e.message}", e)
                 errorMessage = "Gagal memuat profil: ${e.message}"
             }
             isLoading = false
@@ -79,4 +86,5 @@ class ProfileViewModel(private val profileRepository: ProfileRepository) : ViewM
             isLoading = false
         }
     }
+
 }
