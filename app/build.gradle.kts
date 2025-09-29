@@ -83,4 +83,8 @@ dependencies {
 
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0") // Ganti versi jika perlu
 
+
+    implementation("androidx.credentials:credentials:1.6.0-alpha05")
+    implementation("androidx.credentials:credentials-play-services-auth:1.6.0-alpha05")
+    implementation("com.google.android.libraries.identity.googleid:googleid:ght 1.1.1")
 }

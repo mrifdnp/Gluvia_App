@@ -1,6 +1,8 @@
 package com.mrifdnp.gluvia.ui.screen
 
 
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.togetherWith
@@ -65,10 +67,27 @@ import java.time.ZoneId
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment.Companion.Center
+import androidx.compose.ui.Alignment.Companion.CenterHorizontally
+import androidx.compose.ui.graphics.Color.Companion.LightGray
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
+import androidx.credentials.CredentialManager
+import androidx.credentials.GetCredentialRequest
+import androidx.credentials.exceptions.GetCredentialException
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
 import com.mrifdnp.gluvia.ui.viewmodel.SignInViewModel
 import com.mrifdnp.gluvia.ui.viewmodel.SignUpViewModel
+import io.ktor.client.request.request
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
+import java.security.MessageDigest
+import java.util.UUID
 
 // Warna yang digunakan (mengambil dari definisi Anda sebelumnya)
 
@@ -131,6 +150,9 @@ fun AuthScreen(onNavigateToHome: () -> Unit = {}, ) {
                             },
                             onLoginClick = {
                                 currentScreenState = AuthScreenState.SIGN_IN_FORM
+                            },
+                              onRegisterClick = {
+                                currentScreenState = AuthScreenState.SIGN_UP_OPTIONS
                             }
 
                         )
@@ -141,12 +163,18 @@ fun AuthScreen(onNavigateToHome: () -> Unit = {}, ) {
                             onBackToOptions = {
                                 currentScreenState = AuthScreenState.SIGN_UP_OPTIONS
                             },
-                            onNavigateToHome = onNavigateToHome
+                            onNavigateToHome = onNavigateToHome,
+                            onNavigateToSignIn = {
+                                currentScreenState = AuthScreenState.SIGN_IN_FORM
+                            }
                         )
                     }
                     AuthScreenState.SIGN_IN_FORM -> {
                         SignInFormContent(
                             onBackToOptions = {
+                                currentScreenState = AuthScreenState.SIGN_UP_OPTIONS
+                            },
+                            onRegisterClick = {
                                 currentScreenState = AuthScreenState.SIGN_UP_OPTIONS
                             },
                             onNavigateToHome = onNavigateToHome
@@ -167,7 +195,8 @@ fun AuthContent(
     modifier: Modifier = Modifier,
     onEmailSignUpClick: () -> Unit, // Handler klik Email
     onGoogleSignUpClick: () -> Unit,
-    onLoginClick: () -> Unit
+    onLoginClick: () -> Unit,
+    onRegisterClick: () -> Unit
 ) {
     val scrollState = rememberScrollState()
     Column(
@@ -194,7 +223,7 @@ fun AuthContent(
             text = "Sign up",
             color = AuthDarkGreen,
             fontSize = 32.sp,
-            fontWeight = FontWeight.Bold,
+
             modifier = Modifier.padding(bottom = 8.dp)
         )
 
@@ -202,7 +231,7 @@ fun AuthContent(
         Text(
             text = buildAnnotatedString {
                 append("Sudah punya akun? ")
-                withStyle(style = SpanStyle(color = LinkColor, fontWeight = FontWeight.SemiBold)) {
+                withStyle(style = SpanStyle(color = LinkColor, )) {
                     append("Log in")
                 }
             },
@@ -241,15 +270,186 @@ fun AuthContent(
         )
     }
 }
+// File: com.mrifdnp.gluvia.ui.screen/AuthScreen.kt (lanjutan)
+@Composable
+fun SignInOptionsContent(
+    onEmailSignInClick: () -> Unit,
+    onGoogleSignInClick: () -> Unit,
+    onRegisterClick: () -> Unit,
+    onBackToOptions: () -> Unit // Kembali ke layar Sign Up Options utama
+) {
+    val scrollState = rememberScrollState()
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .verticalScroll(scrollState)
+            .padding(horizontal = 32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Spacer(modifier = Modifier.height(32.dp))
+
+
+        // 1. Logo
+        Image(
+            painter = painterResource(id = R.drawable.logo_sma),
+            contentDescription = "Logo Sekolah",
+            modifier = Modifier.size(100.dp),
+            contentScale = ContentScale.Fit
+        )
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        // 2. Judul
+        Text(
+            text = "Login",
+            color = AuthDarkGreen,
+            fontSize = 32.sp,
+
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+
+        // 3. Teks Sign Up
+        Text(
+            text = buildAnnotatedString {
+                append("Belum punya akun? ")
+                withStyle(style = SpanStyle(color = LinkColor, )) {
+                    append("Sign Up")
+                }
+            },
+            modifier = Modifier
+                .padding(bottom = 48.dp)
+                .clickable { onRegisterClick() }
+        )
+
+
+        // Tombol Google
+        AuthButton(
+            text = "Login with Google",
+            icon = R.drawable.ic_google,
+            onClick = onGoogleSignInClick,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Garis Pemisah "atau"
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            HorizontalDivider(color = Color.Black, thickness = 5.dp, modifier = Modifier.weight(1f))
+            Text(" or ", color = Color(0xFF068b6b), modifier = Modifier.padding(horizontal = 8.dp))
+            HorizontalDivider(color = Color.Black, thickness = 5.dp, modifier = Modifier.weight(1f))
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Tombol Email
+        AuthButton(
+            text = "Masuk dengan Email",
+            isOutline = true,
+            onClick = onEmailSignInClick,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(32.dp))
+    }
+}
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SignInFormContent(onBackToOptions: () -> Unit, onNavigateToHome: () -> Unit, viewModel: SignInViewModel = koinViewModel()) {
+fun SignInFormContent(onBackToOptions: () -> Unit, onNavigateToHome: () -> Unit, viewModel: SignInViewModel = koinViewModel(),
+                      onRegisterClick: () -> Unit
+) {
+    // 🔑 STATE INTERNAL UNTUK MENGONTROL TAMPILAN
+    var viewState by remember { mutableStateOf(SignInViewState.OPTIONS) }
 
     // Inisialisasi onNavigateToHome dari Composable
     LaunchedEffect(Unit) {
         viewModel.onNavigateToHome = onNavigateToHome
     }
+    val context = LocalContext.current
+val coroutineScope = rememberCoroutineScope()
+ val TAG = "MyAuthActivityTag"
 
+    // 🔑 Logic Transisi View
+    AnimatedContent(
+        targetState = viewState,
+        label = "SignInFormTransition"
+    ) { targetView ->
+        when (targetView) {
+            SignInViewState.OPTIONS -> {
+                SignInOptionsContent(
+
+                    onEmailSignInClick = { viewState = SignInViewState.EMAIL_FORM }, // 🔑 PINDAH KE FORM
+                    onGoogleSignInClick = {
+
+
+                        val credentialsManager = CredentialManager.create(context)
+
+                        val rawNonce = UUID.randomUUID().toString()
+                        val bytes = rawNonce.toByteArray()
+                        val nd = MessageDigest.getInstance("SHA-256")
+                        val digest = nd.digest(bytes)
+                        val hashedNonce = digest.fold("") { str, it -> str + "%02x".format(it) }
+                        val googleIdOption: GetGoogleIdOption = GetGoogleIdOption.Builder()
+                            .setFilterByAuthorizedAccounts(false)
+                            .setServerClientId("931575962864-056lr271sgjfiiadp8m9su27832e3hev.apps.googleusercontent.com")
+
+                            // nonce string to use when generating a Google ID token
+                            .setNonce(hashedNonce)
+                            .build()
+                        val request: GetCredentialRequest = GetCredentialRequest.Builder()
+                            .addCredentialOption(googleIdOption)
+                            .build()
+
+
+                        coroutineScope.launch {
+                            try {
+                                val result = credentialsManager.getCredential(
+                                    request = request,
+                                    context = context,
+                                )
+                                val credential = result.credential
+                                val googleIdTokenCredential = GoogleIdTokenCredential
+                                    .createFrom(credential.data)
+                                val googleIdToken = googleIdTokenCredential.idToken
+
+                                Log.i(TAG, googleIdToken)
+                                Toast.makeText(context, "You are signed in!", Toast.LENGTH_SHORT)
+                                    .show()
+                                onNavigateToHome()
+                            }catch(e: GetCredentialException){
+                             Toast.makeText(context, e.message, Toast.LENGTH_SHORT)
+                            }catch(e: GoogleIdTokenParsingException){
+                                Toast.makeText(context, e.message, Toast.LENGTH_SHORT)
+
+                            }
+
+                        }
+                    },
+                    onRegisterClick = onRegisterClick,
+                    onBackToOptions = onBackToOptions
+                )
+            }
+            SignInViewState.EMAIL_FORM -> {
+                // 🔑 KODE FORM LOGIN YANG SUDAH ADA DITARUH DI BAWAH INI
+                SignInEmailForm(
+                    viewModel = viewModel,
+                    onBackToOptions = { viewState = SignInViewState.OPTIONS } ,// 🔑 Kembali ke Options
+                    onRegisterClick = onRegisterClick
+                )
+            }
+        }
+    }
+}
+
+// 🔑 DEFINISI VIEW STATE BARU
+private enum class SignInViewState { OPTIONS, EMAIL_FORM }
+
+
+// 🔑 KOMPONEN ASLI FORM LOGIN (Dibuat terpisah)
+@Composable
+fun SignInEmailForm(viewModel: SignInViewModel, onRegisterClick: () -> Unit, onBackToOptions: () -> Unit) {
     val scrollState = rememberScrollState()
 
     Column(
@@ -260,36 +460,64 @@ fun SignInFormContent(onBackToOptions: () -> Unit, onNavigateToHome: () -> Unit,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Spacer(modifier = Modifier.height(24.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Start
-        ) {
-            TextButton(
-                onClick = onBackToOptions,
-                colors = ButtonDefaults.textButtonColors(contentColor = LinkColor),
-                contentPadding = PaddingValues(0.dp)
-            ) {
-                Text("← Kembali")
-            }
-        }
+
+        // 1. Logo
+        Image(
+            painter = painterResource(id = R.drawable.logo_sma),
+            contentDescription = "Logo Sekolah",
+            modifier = Modifier.size(100.dp),
+            contentScale = ContentScale.Fit
+        )
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        // 2. Judul
+        Text(
+            text = "Login",
+            color = AuthDarkGreen,
+            fontSize = 32.sp,
+
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+
+        // 3. Teks Sign Up
+        Text(
+            text = buildAnnotatedString {
+                append("Belum punya akun? ")
+                withStyle(style = SpanStyle(color = LinkColor,)) {
+                    append("Sign Up")
+                }
+            },
+            modifier = Modifier
+                .padding(bottom = 48.dp)
+                .clickable { onRegisterClick() }
+        )
+
+        // --- TOMBOL KEMBALI (ke Opsi Login) ---
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Text(
-            text = "Masuk ke Akun",
-            color = AuthDarkGreen,
-            fontSize = 28.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp)
-        )
 
-        // --- FIELD: EMAIL ---
+
         OutlinedTextField(
             value = viewModel.emailValue,
             onValueChange = viewModel::onEmailChange,
             label = { Text("Email") },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            colors = OutlinedTextFieldDefaults.colors(
+                // Warna ketika field dalam keadaan fokus (saat diklik/diketik)
+                focusedBorderColor = LightGray,
+                focusedLabelColor = AuthDarkGreen, // Warna label saat fokus
+                    focusedTextColor = AuthDarkGreen, // Warna teks input saat fokus
+                cursorColor = AuthDarkGreen,      // Warna kursor
+
+                // Warna ketika field dalam keadaan tidak fokus
+                unfocusedBorderColor = LightGray, // Garis tepi lebih tipis
+                unfocusedLabelColor = AuthDarkGreen.copy(alpha = 0.8f)  // Warna label saat tidak fokus
+
+                // Asumsi warna background default adalah Putih/Transparan
+            )
         )
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -299,7 +527,26 @@ fun SignInFormContent(onBackToOptions: () -> Unit, onNavigateToHome: () -> Unit,
             onValueChange = viewModel::onPasswordChange,
             label = { Text("Password") },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
-            visualTransformation = PasswordVisualTransformation(), // Anda bisa tambahkan toggle visibilitas di sini juga
+            colors = OutlinedTextFieldDefaults.colors(
+                // Warna ketika field dalam keadaan fokus (saat diklik/diketik)
+                focusedBorderColor = LightGray,
+                focusedLabelColor = AuthDarkGreen, // Warna label saat fokus
+                focusedTextColor = AuthDarkGreen, // Warna teks input saat fokus
+                cursorColor = AuthDarkGreen,      // Warna kursor
+
+                // Warna ketika field dalam keadaan tidak fokus
+                unfocusedBorderColor = LightGray, // Garis tepi lebih tipis
+                unfocusedLabelColor = AuthDarkGreen.copy(alpha = 0.8f)  // Warna label saat tidak fokus
+
+                // Asumsi warna background default adalah Putih/Transparan
+            ),
+            visualTransformation = if (viewModel.isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+            trailingIcon = {
+                val image = if (viewModel.isPasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                IconButton(onClick = viewModel::togglePasswordVisibility) {
+                    Icon(imageVector  = image, contentDescription = "Toggle password visibility")
+                }
+            },
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(32.dp))
@@ -315,23 +562,33 @@ fun SignInFormContent(onBackToOptions: () -> Unit, onNavigateToHome: () -> Unit,
 
         // --- TOMBOL LOGIN ---
         Button(
-            onClick = viewModel::onSignInClicked, // Panggil logika login
-            enabled = !viewModel.isLoading, // Nonaktifkan saat loading
+            onClick = viewModel::onSignInClicked,
+            enabled = !viewModel.isLoading && viewModel.isFormValid,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = AuthDarkGreen, // 🔑 Latar Belakang (Active)
+                contentColor = White,           // 🔑 Warna Teks (Active)
+                // Opsional: Warna saat tombol non-aktif (disabled)
+                disabledContainerColor = AuthDarkGreen.copy(alpha = 0.5f),
+                disabledContentColor = White.copy(alpha = 0.5f)
+            ),
+            shape = RoundedCornerShape(8.dp),
             modifier = Modifier.fillMaxWidth().height(50.dp)
         ) {
             if (viewModel.isLoading) {
                 CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
             } else {
-                Text("MASUK", fontWeight = FontWeight.Bold)
+                Text("Log in",)
             }
         }
 
         Spacer(modifier = Modifier.height(32.dp))
     }
 }
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SignUpFormContent(onBackToOptions: () -> Unit,  onNavigateToHome: () -> Unit,       viewModel: SignUpViewModel = koinViewModel()
+fun SignUpFormContent(onBackToOptions: () -> Unit,                       onNavigateToSignIn: () -> Unit,
+                      onNavigateToHome: () -> Unit,       viewModel: SignUpViewModel = koinViewModel()
 
 ) { LaunchedEffect(Unit) {
     viewModel.onNavigateToHome = onNavigateToHome
@@ -368,11 +625,13 @@ fun SignUpFormContent(onBackToOptions: () -> Unit,  onNavigateToHome: () -> Unit
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "Daftar Akun Baru",
+            text = "Sign Up",
             color = AuthDarkGreen,
             fontSize = 28.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp)
+
+            modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
+            textAlign = TextAlign.Center // 🔑 DITAMBAHKAN: Menengahkan teks
+
         )
 
         OutlinedTextField(
@@ -383,7 +642,20 @@ fun SignUpFormContent(onBackToOptions: () -> Unit,  onNavigateToHome: () -> Unit
             label = { Text("Nama Pengguna (Username)") },
             isError = !viewModel.isUsernameValid, // Validasi dari ViewModel
             // ... (KeyboardOptions)
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            colors = OutlinedTextFieldDefaults.colors(
+                // Warna ketika field dalam keadaan fokus (saat diklik/diketik)
+                focusedBorderColor = LightGray,
+                focusedLabelColor = AuthDarkGreen, // Warna label saat fokus
+                focusedTextColor = AuthDarkGreen, // Warna teks input saat fokus
+                cursorColor = AuthDarkGreen,      // Warna kursor
+
+                // Warna ketika field dalam keadaan tidak fokus
+                unfocusedBorderColor = LightGray, // Garis tepi lebih tipis
+                unfocusedLabelColor = AuthDarkGreen.copy(alpha = 0.8f)  // Warna label saat tidak fokus
+
+                // Asumsi warna background default adalah Putih/Transparan
+            )
         )
         if (!viewModel.isUsernameValid) {
             // ... (Pesan error)
@@ -397,7 +669,20 @@ fun SignUpFormContent(onBackToOptions: () -> Unit,  onNavigateToHome: () -> Unit
             label = { Text("Email") },
             isError = !viewModel.isEmailValid,
             // ... (KeyboardOptions)
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            colors = OutlinedTextFieldDefaults.colors(
+                // Warna ketika field dalam keadaan fokus (saat diklik/diketik)
+                focusedBorderColor = LightGray,
+                focusedLabelColor = AuthDarkGreen, // Warna label saat fokus
+                focusedTextColor = AuthDarkGreen, // Warna teks input saat fokus
+                cursorColor = AuthDarkGreen,      // Warna kursor
+
+                // Warna ketika field dalam keadaan tidak fokus
+                unfocusedBorderColor = LightGray, // Garis tepi lebih tipis
+                unfocusedLabelColor = AuthDarkGreen.copy(alpha = 0.8f)  // Warna label saat tidak fokus
+
+                // Asumsi warna background default adalah Putih/Transparan
+            )
         )
         // ... (Pesan error Email)
         Spacer(modifier = Modifier.height(16.dp))
@@ -416,7 +701,20 @@ fun SignUpFormContent(onBackToOptions: () -> Unit,  onNavigateToHome: () -> Unit
                     Icon(imageVector  = image, contentDescription = "Toggle password visibility")
                 }
             },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            colors = OutlinedTextFieldDefaults.colors(
+                // Warna ketika field dalam keadaan fokus (saat diklik/diketik)
+                focusedBorderColor = LightGray,
+                focusedLabelColor = AuthDarkGreen, // Warna label saat fokus
+                focusedTextColor = AuthDarkGreen, // Warna teks input saat fokus
+                cursorColor = AuthDarkGreen,      // Warna kursor
+
+                // Warna ketika field dalam keadaan tidak fokus
+                unfocusedBorderColor = LightGray, // Garis tepi lebih tipis
+                unfocusedLabelColor = AuthDarkGreen.copy(alpha = 0.8f)  // Warna label saat tidak fokus
+
+                // Asumsi warna background default adalah Putih/Transparan
+            )
         )
         // ... (Pesan error Password)
         Spacer(modifier = Modifier.height(16.dp))
@@ -431,12 +729,26 @@ fun SignUpFormContent(onBackToOptions: () -> Unit,  onNavigateToHome: () -> Unit
                 Icon(
                     imageVector = Icons.Filled.CalendarToday,
                     contentDescription = "Pilih Tanggal",
-                    modifier = Modifier.clickable { showDatePicker = true }
+                    modifier = Modifier.clickable { showDatePicker = true },
+                    tint = AuthDarkGreen
+
                 )
             },
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { showDatePicker = true }
+                .clickable { showDatePicker = true },
+            colors = OutlinedTextFieldDefaults.colors(
+                // WARNA KETIKA FOKUS (Teks dan Border)
+                focusedBorderColor = LightGray,
+                focusedLabelColor = AuthDarkGreen,
+                focusedTextColor = AuthDarkGreen,
+                cursorColor = AuthDarkGreen,
+
+                // 🔑 PERBAIKAN: WARNA KETIKA TIDAK FOKUS
+                unfocusedBorderColor = LightGray,
+                unfocusedLabelColor = AuthDarkGreen.copy(alpha = 0.8f),
+                unfocusedTextColor = AuthDarkGreen // 🔑 SET TEXT VALUE COLOR
+            )
         )
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -452,7 +764,19 @@ fun SignUpFormContent(onBackToOptions: () -> Unit,  onNavigateToHome: () -> Unit
                 onValueChange = { /* Kosong */ },
                 label = { Text("Jenis Kelamin") },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = isGenderDropdownExpanded) },
-                modifier = Modifier.menuAnchor().fillMaxWidth()
+                modifier = Modifier.menuAnchor().fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    // WARNA KETIKA FOKUS
+                    focusedBorderColor = AuthDarkGreen,
+                    focusedLabelColor = AuthDarkGreen,
+                    focusedTextColor = AuthDarkGreen,
+                    cursorColor = AuthDarkGreen,
+
+                    // 🔑 PERBAIKAN: WARNA KETIKA TIDAK FOKUS
+                    unfocusedBorderColor = Color.Gray,
+                    unfocusedLabelColor = AuthDarkGreen.copy(alpha = 0.8f),
+                    unfocusedTextColor = AuthDarkGreen // 🔑 SET TEXT VALUE COLOR
+                )
             )
             ExposedDropdownMenu(
                 expanded = isGenderDropdownExpanded,
@@ -460,7 +784,7 @@ fun SignUpFormContent(onBackToOptions: () -> Unit,  onNavigateToHome: () -> Unit
             ) {
                 viewModel.genderOptions.forEach { selectionOption ->
                     DropdownMenuItem(
-                        text = { Text(selectionOption) },
+                        text = { Text(selectionOption,color = AuthDarkGreen)  },
                         onClick = {
                             viewModel.onGenderSelected(selectionOption) // Panggil handler di VM
                             isGenderDropdownExpanded = false
@@ -476,11 +800,32 @@ fun SignUpFormContent(onBackToOptions: () -> Unit,  onNavigateToHome: () -> Unit
         Button(
             onClick = viewModel::onSignUpClicked, // Panggil logika bisnis di VM
             enabled = viewModel.isFormComplete, // Enabled state dari VM
-            // ... (Colors dan Shape)
+            colors = ButtonDefaults.buttonColors(
+                containerColor = AuthDarkGreen, // 🔑 Latar Belakang (Active)
+                contentColor = White,           // 🔑 Warna Teks (Active)
+                // Opsional: Warna saat tombol non-aktif (disabled)
+                disabledContainerColor = AuthDarkGreen.copy(alpha = 0.5f),
+                disabledContentColor = White.copy(alpha = 0.5f)
+            ),
+            shape = RoundedCornerShape(8.dp), // 🔑 Asumsi shape yang digunakan di SignUp
             modifier = Modifier.fillMaxWidth().height(50.dp)
         ) {
-            Text("DAFTAR SEKARANG", fontWeight = FontWeight.Bold)
+            Text("Sign up", )
         }
+        Spacer(modifier = Modifier.height(32.dp))
+
+
+        Text(
+            text = buildAnnotatedString {
+                append("Sudah punya akun? ")
+                withStyle(style = SpanStyle(color = LinkColor, )) {
+                    append("Log in")
+                }
+            },
+            modifier = Modifier
+                .padding(bottom = 32.dp) // 🔑 Jarak sebelum field input
+                .clickable { onNavigateToSignIn() } // 🔑 Panggil handler navigasi baru
+        )
 
         Spacer(modifier = Modifier.height(32.dp))
     }
@@ -512,7 +857,7 @@ fun SignUpFormContent(onBackToOptions: () -> Unit,  onNavigateToHome: () -> Unit
 fun SignUpFormContentPreview() {
     // Asumsi theme standar, White sudah didefinisikan
     Surface(color = White) {
-        SignUpFormContent(onBackToOptions = {},   onNavigateToHome = {})
+        SignUpFormContent(onBackToOptions = {},   onNavigateToHome = {}, onNavigateToSignIn = {})
     }
 }
 
@@ -542,12 +887,16 @@ fun AuthButton(
     text: String,
     icon: Int? = null,
     isOutline: Boolean = false,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier // 🔑 TAMBAHKAN MODIFIER SEBAGAI PARAMETER OPSIONAL
+
 ) {
     val backgroundColor = if (isOutline) White else ButtonColor
     val borderColor = if (isOutline) LinkColor else Color.Transparent
     val textColor = if (isOutline) AuthDarkGreen else Black // Menggunakan AuthDarkGreen untuk tombol outline
-
+    val defaultModifier = Modifier
+        .fillMaxWidth(0.8f)
+        .height(50.dp)
     Button(
         onClick = onClick,
         colors = ButtonDefaults.buttonColors(
@@ -556,9 +905,8 @@ fun AuthButton(
         ),
         shape = RoundedCornerShape(8.dp),
         border = BorderStroke(1.dp, borderColor),
-        modifier = Modifier
-            .fillMaxWidth(0.8f)
-            .height(50.dp)
+        modifier = modifier.then(defaultModifier) // Menggabungkan modifier input dengan default width
+
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             if (icon != null) {
@@ -570,7 +918,7 @@ fun AuthButton(
                     modifier = Modifier.size(40.dp).padding(end = 8.dp)
                 )
             }
-            Text(text, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+            Text(text,  fontSize = 16.sp)
         }
     }
 }

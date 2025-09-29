@@ -90,13 +90,15 @@ fun GluviaHeader(
     onMenuClick: () -> Unit,
     showTitle: Boolean = true, // <-- Kontrol visibilitas Title (Gluvia)
     showLogo: Boolean = true,  // <-- Kontrol visibilitas Logo
-    logoResId: Int = R.drawable.logo_sma // <-- Ganti dengan R.drawable.logo_sma atau logo yang sesuai
+    logoResId: Int = R.drawable.logo_sma, // <-- Ganti dengan R.drawable.logo_sma atau logo yang sesuai
+    backgroundColor: Color = DarkGreen, // 🔑 Warna latar belakang header (default DarkGreen)
+
 ) {
     // Gunakan Column untuk menumpuk Status Bar Spacer dan Row Header
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(DarkGreen)
+            .background(backgroundColor)
     ) {
         // PERBAIKAN: Spacer ini memberikan tinggi yang dibutuhkan untuk Status Bar
         Spacer(
@@ -121,7 +123,6 @@ fun GluviaHeader(
                         text = "Gluvia",
                         color = White,
                         fontSize = 24.sp,
-                        fontWeight = FontWeight.SemiBold
                     )
                 }
             }
@@ -179,7 +180,6 @@ fun GluviaDescriptionArea(onNextClick: () -> Unit) {
                 color = White,
                 textAlign = TextAlign.Center,
                 fontSize = 30.sp,
-                fontWeight = FontWeight.SemiBold,
                 modifier = Modifier
                         .fillMaxWidth(0.6f)
                     .height(50.dp)
@@ -208,7 +208,6 @@ fun GluviaDescriptionArea(onNextClick: () -> Unit) {
                 Text(
                     text = "Berikutnya",
                     fontSize = 18.sp,
-                    fontWeight = FontWeight.SemiBold
                 )
             }
         }

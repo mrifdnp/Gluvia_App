@@ -50,9 +50,10 @@ fun GluviaTheme(
         else -> LightColorScheme
     }
 
+
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography,
+        typography = AppTypography, // 🔑 Gunakan AppTypography yang baru
         content = content
     )
 }

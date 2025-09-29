@@ -58,6 +58,7 @@ fun MainNavigation(mainViewModel: MainViewModel = koinViewModel()) { // 🔑 Inj
 
     // 🔑 Tentukan rute awal dinamis (nullable)
     val startDestination: String? = when(appState) {
+        AppState.ONBOARDING_REQUIRED -> SCREEN_ONBOARDING // 🔑 Rute awal baru
         AppState.UNAUTHENTICATED -> SCREEN_AUTH
         AppState.AUTHENTICATED -> SCREEN_HOME
         null -> null // Kasus ini akan digunakan saat state masih dimuat (Loading)
@@ -82,12 +83,12 @@ fun MainNavigation(mainViewModel: MainViewModel = koinViewModel()) { // 🔑 Inj
 
     // Onboarding Selesai -> Pergi ke Auth Screen
     val onOnboardFinish: () -> Unit = {
+        mainViewModel.onOnboardingCompleted() // 🔑 Panggil fungsi di ViewModel untuk update state
+
         navController.navigate(SCREEN_AUTH) {
-            // Hapus Onboarding dari back stack setelah selesai
             popUpTo(SCREEN_ONBOARDING) { inclusive = true }
         }
     }
-
     // Pendaftaran Selesai -> Pergi ke Home Screen
     val onAuthSuccess: () -> Unit = {
         navController.navigate(SCREEN_HOME) {
@@ -120,7 +121,7 @@ fun MainNavigation(mainViewModel: MainViewModel = koinViewModel()) { // 🔑 Inj
 
         // 1. SCREEN_ONBOARDING
         composable(SCREEN_ONBOARDING) {
-            GluviaScreen(onNextClick = onOnboardFinish)
+            GluviaScreen(onNextClick = onOnboardFinish) // Menggunakan onOnboardFinish
         }
 
         // 2. SCREEN_AUTH
@@ -137,7 +138,6 @@ fun MainNavigation(mainViewModel: MainViewModel = koinViewModel()) { // 🔑 Inj
         composable(SCREEN_EDU) {
             EduScreen(
                 onBackClick = onBack, // Kembali ke layar sebelumnya (Home)
-                onWatchVideoClick = { /* Aksi buka video */ }
             )
         }
 

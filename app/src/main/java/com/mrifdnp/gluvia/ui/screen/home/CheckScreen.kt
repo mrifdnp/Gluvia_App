@@ -9,8 +9,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
-import androidx.compose.runtime.* // 🔑 Import penting untuk state management
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.* import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
@@ -20,23 +19,43 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.mrifdnp.gluvia.R // Pastikan R diimpor
+import com.mrifdnp.gluvia.R
 import com.mrifdnp.gluvia.ui.screen.GluviaHeader
-import com.mrifdnp.gluvia.ui.viewmodel.ProfileViewModel
-import org.koin.androidx.compose.koinViewModel
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import com.mrifdnp.gluvia.ui.screen.WaveShapeBackground
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalLayoutDirection
+import com.mrifdnp.gluvia.ui.screen.AuthDarkGreen
 import com.mrifdnp.gluvia.ui.viewmodel.CheckViewModel
+import org.koin.androidx.compose.koinViewModel
+// Hapus import yang tidak digunakan (ProfileViewModel)
 
 
-// Warna yang digunakan (AuthDarkGreen, White, Black) sudah didefinisikan
+// Warna yang digunakan (Dipertahankan)
 val AuthDarkGreen = Color(0xFF016d54)
 val White = Color(0xFFFFFFFF)
 val Black = Color(0xFF000000)
-val RedWarning = Color(0xFFFF4444) // Warna merah untuk peringatan
-val NormalColor = Color(0xFF6ce5e8) // Warna untuk hasil normal
+val RedWarning = Color(0xFFFF4444)
+val NormalColor = Color(0xFF6ce5e8)
+val SecondGreen = Color(0xFF068b6b)
 
+data class Hospital(
+    val name: String,
+    val phone: String,
+    val address: String,
+    val imageResId: Int
+)
+
+val gianyarHospitals = listOf(
+    Hospital("RSU Ganesha", "0361-4710059", "Jl.Raya Celuk Sukawati", R.drawable.check),
+    Hospital("RSU Ari Canti", "0361-982223", "Jl.Raya Mas Ubud", R.drawable.check),
+    Hospital("RSU Famili Husada", "0361-8493344", "Jl. Astina Timur Samplangan", R.drawable.check)
+)
+
+fun getHospitalsForCounty(county: String): List<Hospital> {
+    // 🔑 MOCK LOGIC: Hanya mengembalikan data Gianyar untuk semua pilihan di demo ini
+    return if (county == "GIANYAR") gianyarHospitals else emptyList()
+}
 
 @Composable
 fun CheckScreen(
@@ -44,182 +63,219 @@ fun CheckScreen(
     onNavigateToCare: () -> Unit,
     viewModel: CheckViewModel = koinViewModel()
 ) {
-    // 🔑 STATE UNTUK INPUT DAN HASIL
     var phInput by remember { mutableStateOf("") }
+    // 🔑 Mengambil state hasil dari ViewModel
     val glucoseValue: Float? = viewModel.calculatedGlukosa
     val isCalculated: Boolean = viewModel.isCalculated
 
-
-    // Logika Tampilan
     val displayValue = glucoseValue?.let { String.format("%.2f", it) } ?: "N/A"
-    // Rentang normal: 70 – 126 mg/dL
     val isNormal = glucoseValue != null && glucoseValue >= 70f && glucoseValue <= 126f
 
     Scaffold(
         topBar = {
-            GluviaHeader(onMenuClick = onBackToHome, showTitle = false)
+            GluviaHeader(onMenuClick = onBackToHome, showTitle = false, backgroundColor = EduGreen)
         },
-        containerColor = AuthDarkGreen
+        containerColor = HeadGreen
     ) { paddingValues ->
 
-        Column(
+        val layoutDirection = LocalLayoutDirection.current
+        val contentPadding = Modifier.padding(
+            start = paddingValues.calculateStartPadding(layoutDirection),
+            top = paddingValues.calculateTopPadding(),
+            end = paddingValues.calculateEndPadding(layoutDirection),
+            bottom = 0.dp
+        )
+
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .then(contentPadding)
         ) {
+            // Background Layers (unchanged)
 
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // 1. Judul Layar
-            Text(
-                text = "Gluvi-Check",
-                color = White,
-                fontSize = 40.sp,
-                fontWeight = FontWeight.ExtraBold,
-                modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp)
+            Image(
+                painter = painterResource(id = R.drawable.check),
+                contentDescription = null,
+                modifier = Modifier
+                    .size(300.dp)
+                    .align(Alignment.Center)
+                    .alpha(0.5f),
+                contentScale = ContentScale.Fit
+            )
+            WaveShapeBackground(
+                color = AuthDarkGreen,
+                waveColor = HeadGreen,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight(0.3f)
+                    .align(Alignment.BottomCenter)
             )
 
-            // 🔑 2. INPUT FIELD PH SALIVA
-            InputPhSection(
-                phInput = phInput,
-                onPhChange = { phInput = it },
-                onCalculate = {
-                    viewModel.onCalculateAndSave(phInput)
+            // KONTEN UTAMA
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
 
-                }
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // 🔑 3. HASIL DAN ILUSTRASI
-            if (isCalculated) {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(250.dp)
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.check),
-                        contentDescription = "Ilustrasi Pengecekan Gula Darah",
-                        modifier = Modifier.fillMaxSize(0.8f)
-                    )
-
-                    // Kotak Hasil Perkiraan Kadar Gula Darah
-                    ResultBox(glucoseValue = displayValue, isNormal = isNormal)
-                }
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // 4. Catatan/Notes
-                NotesSection(isNormal = isNormal)
-
-                Spacer(modifier = Modifier.height(32.dp))
-
-                // 5. Tombol Aksi (Lihat Fasilitas Kesehatan Terdekat)
-                CheckActionButton(
-                    text = "Lihat Fasilitas Kesehatan Terdekat",
-                    onClick = onNavigateToCare,
-                    isPrimary = true
+                // 1. Judul Layar
+                Text(
+                    text = "Gluvi-Check",
+                    color = White,
+                    fontSize = 40.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp)
                 )
 
-                // 6. Tombol Kembali ke Home
-                CheckActionButton(
-                    text = "Kembali ke Home",
-                    onClick = onBackToHome,
-                    isPrimary = false
-                )
-
-                Spacer(modifier = Modifier.height(40.dp))
-            } else {
-                // Teks saat belum dihitung
-                Box(modifier = Modifier.fillMaxWidth().height(250.dp), contentAlignment = Alignment.Center) {
-                    Text(
-                        text = "Masukkan nilai pH Saliva Anda untuk melihat hasil perkiraan.",
-                        color = White.copy(alpha = 0.8f),
-                        textAlign = TextAlign.Center,
-                        fontSize = 18.sp,
-                        modifier = Modifier.padding(32.dp)
+                // 🔑 TAMPILAN AWAL (Sebelum Dihitung)
+                if (!isCalculated) {
+                    InitialCheckContent(
+                        phInput = phInput,
+                        onPhChange = { phInput = it },
+                        onCalculate = { viewModel.onCalculateAndSave(phInput) }
+                    )
+                } else {
+                    // 🔑 TAMPILAN HASIL (Setelah Dihitung)
+                    ResultCheckContent(
+                        glucoseValue = displayValue,
+                        isNormal = isNormal,
+                        onNavigateToCare = onNavigateToCare,
+                        onBackToHome = onBackToHome
                     )
                 }
+
+                // Spacer untuk memastikan scroll menjangkau seluruh Wave Footer
+                Spacer(modifier = Modifier.height(100.dp))
             }
         }
     }
 }
 
-// --- Komponen Pembantu Baru ---
+// --- 🔑 KOMPONEN BARU: TAMPILAN AWAL ---
 
 @Composable
-fun InputPhSection(phInput: String, onPhChange: (String) -> Unit, onCalculate: () -> Unit) {
+fun InitialCheckContent(
+    phInput: String,
+    onPhChange: (String) -> Unit,
+    onCalculate: () -> Unit
+) {
+    // Asumsi R.drawable.ic_ph_droplet adalah ikon pH
+
+    Spacer(modifier = Modifier.height(32.dp))
+
+    Image(
+        painter = painterResource(id = R.drawable.ph),
+        contentDescription = "pH Droplet Icon",
+        modifier = Modifier.size(250.dp).padding(bottom = 32.dp),
+        contentScale = ContentScale.Fit
+    )
+
+    // 1. Input Field (Hanya field, tanpa tombol hitung di dalamnya)
     OutlinedTextField(
         value = phInput,
-        onValueChange = { newValue ->
-            // Filter hanya menerima angka, titik, dan koma
-            val filteredValue = newValue.filter { it.isDigit() || it == '.' || it == ',' }
-            onPhChange(filteredValue.replace(',', '.')) // Standarisasi koma ke titik
-        },
-        label = { Text("Input Kadar pH Saliva (Contoh: 7.2)") },
+        onValueChange = onPhChange,
+        label = { Text("Input pH Saliva") },
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
         singleLine = true,
+        shape = RoundedCornerShape(40.dp),
         modifier = Modifier.fillMaxWidth(),
         colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = White,
-            unfocusedBorderColor = White.copy(alpha = 0.5f),
-            focusedLabelColor = White,
-            unfocusedLabelColor = White.copy(alpha = 0.8f),
-            focusedTextColor = White,
-            unfocusedTextColor = White,
-            cursorColor = White,
-            focusedContainerColor = Color.Transparent,
-            unfocusedContainerColor = Color.Transparent
+            focusedBorderColor = AuthDarkGreen,
+            unfocusedBorderColor = AuthDarkGreen.copy(alpha = 0.5f),
+            focusedLabelColor = AuthDarkGreen,
+            unfocusedLabelColor = AuthDarkGreen.copy(alpha = 0.8f),
+            focusedTextColor = AuthDarkGreen,
+            unfocusedTextColor = AuthDarkGreen,
+            cursorColor = AuthDarkGreen,
+            focusedContainerColor = Color.White,
+            unfocusedContainerColor = Color.White
         )
     )
-    Spacer(Modifier.height(16.dp))
+
+    // 2. Reminder Text Merah
+    Spacer(modifier = Modifier.height(32.dp))
+    Text(
+        text = "! Reminder !",
+        color = RedWarning,
+        fontSize = 18.sp,
+        modifier = Modifier.padding(bottom = 8.dp)
+    )
+    Text(
+        text = "Pengukuran pH saliva dilakukan sesaat setelah bangun tidur pada pagi hari tanpa mengkonsumsi makanan, minuman ataupun menggosok gigi.",
+        color = RedWarning,
+        fontSize = 16.sp,
+        lineHeight = 24.sp,
+        textAlign = TextAlign.Center,
+        modifier = Modifier.padding(bottom = 40.dp)
+    )
+
+    // 3. Tombol Hitung
     Button(
         onClick = onCalculate,
         enabled = phInput.toFloatOrNull() != null,
-        colors = ButtonDefaults.buttonColors(containerColor = White),
-        shape = RoundedCornerShape(8.dp),
+        colors = ButtonDefaults.buttonColors(containerColor = AuthDarkGreen), // Warna Tombol lebih gelap
+        shape = RoundedCornerShape(40.dp),
         modifier = Modifier.fillMaxWidth(0.9f).height(50.dp)
     ) {
-        Text("HITUNG HASIL GLUKOSA", color = AuthDarkGreen, fontWeight = FontWeight.SemiBold)
+        Text("Cari Perkiraan Kadar Gula Darah", color = White, fontWeight = FontWeight.SemiBold)
     }
 }
+
+// --- 🔑 KOMPONEN BARU: TAMPILAN HASIL (Untuk membersihkan CheckScreen) ---
+
+@Composable
+fun ResultCheckContent(
+    glucoseValue: String,
+    isNormal: Boolean,
+    onNavigateToCare: () -> Unit,
+    onBackToHome: () -> Unit
+) {
+    // Menggabungkan semua komponen hasil dari kode lama
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(250.dp)
+    ) {
+        Image(
+            painter = painterResource(id = R.drawable.check),
+            contentDescription = "Ilustrasi Pengecekan Gula Darah",
+            modifier = Modifier.fillMaxSize(0.8f)
+        )
+        ResultBox(glucoseValue = glucoseValue, isNormal = isNormal)
+    }
+
+    Spacer(modifier = Modifier.height(24.dp))
+    NotesSection(isNormal = isNormal)
+    Spacer(modifier = Modifier.height(32.dp))
+
+    CheckActionButton(
+        text = "Lihat Fasilitas Kesehatan Terdekat",
+        onClick = onNavigateToCare,
+        isPrimary = false
+    )
+    CheckActionButton(
+        text = "Kembali ke Home",
+        onClick = onBackToHome,
+        isPrimary = false
+    )
+    Spacer(modifier = Modifier.height(40.dp))
+}
+
+
+// --- Komponen Pembantu (Dipertahankan) ---
 
 @Composable
 fun ResultBox(glucoseValue: String, isNormal: Boolean) {
     val resultColor = if (isNormal) NormalColor else RedWarning
-
     Card(
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-        modifier = Modifier
-            .fillMaxWidth(0.8f)
-
-            .offset(y = 50.dp)
+        shape = RoundedCornerShape(12.dp), colors = CardDefaults.cardColors(containerColor = White), elevation = CardDefaults.cardElevation(defaultElevation = 8.dp), modifier = Modifier.fillMaxWidth(0.8f).offset(y = 50.dp)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 12.dp, horizontal = 16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = "Kadar Gula Darah Anda:",
-                color = AuthDarkGreen,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 14.sp
-            )
-            Text(
-                text = "$glucoseValue mg/dL",
-                color = resultColor,
-                fontWeight = FontWeight.ExtraBold,
-                fontSize = 28.sp
-            )
+        Column(modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp, horizontal = 16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(text = "Kadar Gula Darah Anda:", color = AuthDarkGreen, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+            Text(text = "$glucoseValue mg/dL", color = resultColor, fontWeight = FontWeight.ExtraBold, fontSize = 28.sp)
         }
     }
 }
@@ -233,69 +289,28 @@ fun NotesSection(isNormal: Boolean) {
     }
 
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(
-            text = "STATUS HASIL",
-            color = if (isNormal) NormalColor else RedWarning,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
-        Text(
-            text = "Rentang Normal: 70 – 126 mg/dL",
-            color = White,
-            fontSize = 14.sp,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
-        Card(
-            colors = CardDefaults.cardColors(containerColor = White.copy(alpha = 0.9f)),
-            shape = RoundedCornerShape(10.dp),
-            modifier = Modifier.padding(horizontal = 8.dp)
-        ) {
-            Text(
-                text = statusText,
-                color = if (isNormal) AuthDarkGreen else RedWarning,
-                fontSize = 14.sp,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(12.dp)
-            )
+        Text(text = "STATUS HASIL", color = if (isNormal) NormalColor else RedWarning, fontSize = 18.sp, modifier = Modifier.padding(bottom = 8.dp))
+        Text(text = "Rentang Normal: 70 – 126 mg/dL", color = White, fontSize = 14.sp, modifier = Modifier.padding(bottom = 8.dp))
+        Card(colors = CardDefaults.cardColors(containerColor = White.copy(alpha = 0.9f)), shape = RoundedCornerShape(10.dp), modifier = Modifier.padding(horizontal = 8.dp)) {
+            Text(text = statusText, color = if (isNormal) AuthDarkGreen else RedWarning, fontSize = 14.sp, textAlign = TextAlign.Center, modifier = Modifier.padding(12.dp))
         }
     }
 }
 
 @Composable
-fun CheckActionButton(
-    text: String,
-    onClick: () -> Unit,
-    isPrimary: Boolean
-) {
+fun CheckActionButton(text: String, onClick: () -> Unit, isPrimary: Boolean) {
     val backgroundColor = if (isPrimary) White else AuthDarkGreen
     val textColor = if (isPrimary) AuthDarkGreen else White
-    val borderColor = if (isPrimary) Color.Transparent else White
 
-    Button(
-        onClick = onClick,
-        colors = ButtonDefaults.buttonColors(
-            containerColor = backgroundColor,
-            contentColor = textColor
-        ),
-        shape = RoundedCornerShape(50.dp),
-        border = BorderStroke(1.dp, borderColor),
-        modifier = Modifier
-            .fillMaxWidth(0.9f)
-            .height(50.dp)
-            .padding(bottom = 12.dp)
-    ) {
+
+    Button(onClick = onClick, colors = ButtonDefaults.buttonColors(containerColor = backgroundColor, contentColor = textColor), shape = RoundedCornerShape(50.dp),  modifier = Modifier.fillMaxWidth(0.9f).height(50.dp).padding(bottom = 12.dp)) {
         Text(text, fontWeight = FontWeight.SemiBold)
     }
 }
 
-// --- Preview ---
 
 @Preview(showBackground = true)
 @Composable
 fun CheckScreenPreview() {
-    CheckScreen(
-        onBackToHome = {},
-        onNavigateToCare = {}
-    )
+    CheckScreen(onBackToHome = {}, onNavigateToCare = {})
 }

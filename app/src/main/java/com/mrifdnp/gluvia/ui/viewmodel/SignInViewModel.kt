@@ -25,9 +25,19 @@ class SignInViewModel(private val authRepository: AuthRepository) : ViewModel() 
     var errorMessage by mutableStateOf<String?>(null)
         private set
 
+    var isPasswordVisible by mutableStateOf(false)
+        private set
+
     // --- Handler Input ---
     fun onEmailChange(newEmail: String) { emailValue = newEmail }
     fun onPasswordChange(newPassword: String) { passwordValue = newPassword }
+
+    fun togglePasswordVisibility() {
+        isPasswordVisible = !isPasswordVisible
+    }
+    val isFormValid: Boolean
+        get() = emailValue.isNotEmpty() && passwordValue.isNotEmpty()
+
 
     // --- Logika Login ---
     fun onSignInClicked() {

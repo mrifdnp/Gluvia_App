@@ -71,6 +71,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.draw.clip
+import com.mrifdnp.gluvia.ui.screen.home.SecondGreen
+import com.mrifdnp.gluvia.ui.theme.GaretFamily
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 
@@ -95,7 +98,7 @@ fun HomeScreen(
         // Isi Drawer (Menu Samping)
         drawerContent = {
             ModalDrawerSheet(
-                drawerContainerColor = AuthDarkGreen,
+                drawerContainerColor = SecondGreen,
                 content = {
 
                     HomeDrawerContent(
@@ -104,9 +107,9 @@ fun HomeScreen(
                         onNavigate = { route ->
                             scope.launch { drawerState.close() }
                             if (route == "logout_route") {
-                                viewModel.onLogoutClicked(onLogout) // Panggil VM, teruskan onLogout
+                                viewModel.onLogoutClicked(onLogout)
                             } else {
-                                onFeatureClick(route) // Navigasi fitur normal
+                                onFeatureClick(route)
                             }
                         }
                     )
@@ -118,8 +121,8 @@ fun HomeScreen(
         topBar = {
             GluviaHeader(
                 onMenuClick = { scope.launch { drawerState.open() } },
-
-                showTitle = true,
+                backgroundColor= SecondGreen,
+            showTitle = false,
                 showLogo = true
             )
         },
@@ -131,21 +134,34 @@ fun HomeScreen(
             start = paddingValues.calculateStartPadding(layoutDirection),
             top = paddingValues.calculateTopPadding(),
             end = paddingValues.calculateEndPadding(layoutDirection),
-            bottom = 0.dp // Tetap set 0.dp agar footer menempel
+            bottom = 0.dp
         )
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .then(columnPadding)
         ) {
-            // Konten Utama (Header Sambutan & Kartu)
+
             Column(modifier = Modifier.weight(1f),) {
                 HomeHeader(userName = viewModel.userName)
 
-                // Kartu diatur dalam Grid
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(40.dp)
+
+                        .clip(RoundedCornerShape(
+                            bottomStart = 12.dp,
+                            bottomEnd = 12.dp
+                        ))
+                        .background(AuthDarkGreen)
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+
                 FeatureGrid(
+
                     featureList = viewModel.featureCards,
-                    onCardClick = onFeatureClick // <-- Teruskan callback
+                    onCardClick = onFeatureClick
                 )
             }
 
@@ -164,6 +180,22 @@ fun HomeDrawerContent(
 ) {
     var isDropdownExpanded by remember { mutableStateOf(false) }
 
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize() // FillMaxHeight() dari parent sudah cukup
+            .background(AuthDarkGreen) // Warna dasar
+    ) {
+
+        // 1. WAVE FOOTER (Sebagai layer background)
+        WaveShapeBackground(
+            color = AuthDarkGreen, // Warna atas (agar gelombang terlihat)
+            waveColor = SecondGreen, // Warna gelombang
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(0.3f) // Ukuran gelombang
+                .align(Alignment.BottomCenter)
+        )
     Column(
         modifier = Modifier
             .fillMaxHeight()
@@ -220,7 +252,7 @@ fun HomeDrawerContent(
 
                     Text(
                         text = "Pilih Opsi",
-                        fontWeight = FontWeight.Bold,
+
                         textAlign = TextAlign.Center,
                         modifier = Modifier
                             .fillMaxWidth()
@@ -272,7 +304,6 @@ fun HomeDrawerContent(
             text = "Main Menu",
             color = White,
             fontSize = 32.sp,
-            fontWeight = FontWeight.ExtraBold,
             textAlign = TextAlign.Start,
             modifier = Modifier
                 .fillMaxWidth()
@@ -291,7 +322,7 @@ fun HomeDrawerContent(
                             text = title,
                             color = White,
                             fontSize = 24.sp,
-                            fontWeight = FontWeight.SemiBold
+
                         )
                     },
                     selected = false,
@@ -312,6 +343,7 @@ fun HomeDrawerContent(
 
     }
 }
+}
 
 
 @Composable
@@ -320,7 +352,7 @@ fun HomeHeader(userName: String) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(AuthDarkGreen)
+            .background(SecondGreen)
             .padding(horizontal = 32.dp, vertical = 24.dp)
             .wrapContentHeight()
     ) {
@@ -328,12 +360,13 @@ fun HomeHeader(userName: String) {
             text = "Selamat datang di",
             color = White,
             fontSize = 24.sp,
+            fontWeight = FontWeight.Medium,
         )
         Text(
             text = "Gluvia",
             color = White,
             fontSize = 48.sp,
-            fontWeight = FontWeight.ExtraBold,
+            fontWeight = FontWeight.Medium,
 
         )
 
@@ -344,7 +377,11 @@ fun HomeHeader(userName: String) {
             fontWeight = FontWeight.Medium,
             modifier = Modifier.padding(top = 16.dp)
         )
+
+
+
     }
+
 }
 
 
@@ -374,7 +411,7 @@ fun FeatureCardItem(card: FeatureCard, onClick: () -> Unit) {
             .aspectRatio(1f)
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = White),
+        colors = CardDefaults.cardColors(containerColor = SecondGreen),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(
@@ -384,24 +421,25 @@ fun FeatureCardItem(card: FeatureCard, onClick: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
+            Text(
+                text = card.title,
+                fontSize = 20.sp,
+                fontFamily = GaretFamily,
+                fontWeight = FontWeight.Medium,
+                color = White,
 
+                )
             Image(
                 painter = painterResource(id = card.iconResId),
                 contentDescription = card.description,
                 contentScale = ContentScale.Fit,
                 modifier = Modifier
-                    .size(80.dp)
+                    .size(120.dp)
                     .padding(bottom = 8.dp)
             )
 
             // Judul Fitur
-            Text(
-                text = card.title,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = AuthDarkGreen,
 
-            )
         }
     }
 }

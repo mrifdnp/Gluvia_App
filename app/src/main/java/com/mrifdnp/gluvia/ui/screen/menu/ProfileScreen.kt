@@ -24,8 +24,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
-
 import com.mrifdnp.gluvia.ui.screen.GluviaHeader
 import com.mrifdnp.gluvia.ui.screen.WaveShapeBackground
 import com.mrifdnp.gluvia.ui.screen.home.AuthDarkGreen
@@ -34,10 +32,7 @@ import com.mrifdnp.gluvia.ui.viewmodel.ProfileViewModel
 import org.koin.androidx.compose.koinViewModel
 
 val SecondGreen = Color(0xFF068b6b)
-val AuthDarkGreen = Color(0xFF016d54)
-val LinkColor = Color(0xFF389F77)
-val White = Color(0xFFFFFFFF)
-val Black = Color(0xFF000000)
+
 
 @Composable
 fun ProfileScreen(
@@ -140,7 +135,6 @@ fun ProfileContent(viewModel: ProfileViewModel, onEditProfileClick: () -> Unit) 
                 text = viewModel.username,
                 color = White,
                 fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(end = 8.dp)
             )
             IconButton(onClick = onEditProfileClick) {
@@ -165,7 +159,6 @@ fun ProfileContent(viewModel: ProfileViewModel, onEditProfileClick: () -> Unit) 
             text = "Profile",
             color = White,
             fontSize = 20.sp,
-            fontWeight = FontWeight.SemiBold,
             modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp,top =8.dp)
         )
 
@@ -198,8 +191,8 @@ fun ProfileContent(viewModel: ProfileViewModel, onEditProfileClick: () -> Unit) 
             text = "Deskripsi",
             color = White,
             fontSize = 20.sp,
-            fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+            modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+
         )
 
 
