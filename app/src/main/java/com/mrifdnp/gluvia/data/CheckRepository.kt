@@ -20,6 +20,14 @@ data class MonthlyAverage(
     val averageGlucose: Float // Tetap Float di Kotlin untuk memudahkan
 )
 
+@Serializable
+data class DailyAverage(
+    @SerialName("day_label")
+    val dayLabel: String, // Contoh: "12 Okt"
+    @SerialName("average_glucose")
+    val averageGlucose: Float
+)
+
 class CheckRepository(
     private val supabaseClient: SupabaseClient,
     private val authRepository: AuthRepository
@@ -65,6 +73,24 @@ class CheckRepository(
                 Result.success(rawData)
             } catch (e: Exception) {
                 // Error pada RPC (misalnya, RLS salah, atau fungsi SQL error)
+                Result.failure(e)
+            }
+        }
+    }
+    suspend fun getDailyAverageGlucose(): Result<List<DailyAverage>> {
+        return withContext(Dispatchers.IO) {
+            val userId = authRepository.getCurrentUserId()
+            if (userId == null) return@withContext Result.failure(Exception("User tidak terautentikasi"))
+
+            try {
+                // Asumsi: Anda memiliki fungsi SQL bernama get_daily_glucose_avg
+                val rawData = supabaseClient.postgrest.rpc(
+                    function = "get_daily_glucose_avg",
+                    parameters = mapOf("user_uuid" to userId)
+                ).decodeList<DailyAverage>()
+
+                Result.success(rawData)
+            } catch (e: Exception) {
                 Result.failure(e)
             }
         }

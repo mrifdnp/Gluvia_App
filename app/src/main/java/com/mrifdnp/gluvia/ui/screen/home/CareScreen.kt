@@ -37,6 +37,7 @@ import com.mrifdnp.gluvia.ui.screen.White // Asumsi Warna White diimpor
 @Composable
 fun CareScreen(
     onBackToHome: () -> Unit,
+    onMenuClick: () -> Unit,
     onCountySelected: (county: String) -> Unit = {} // Parameter ini tidak digunakan di sini lagi
 ) {
 
@@ -49,7 +50,7 @@ fun CareScreen(
 
     Scaffold(
         topBar = {
-            GluviaHeader(onMenuClick = onBackToHome, showTitle = false, backgroundColor = SecondGreen)
+            GluviaHeader(onMenuClick = onMenuClick, showTitle = false, backgroundColor = SecondGreen)
         },
         containerColor = HeadGreen
     ) { paddingValues ->
@@ -131,7 +132,7 @@ fun CareScreen(
                             countyName = county,
                             hospitalList = getHospitalsForCounty(county),
                             onBackToList = { selectedCounty = null }, // Kembali ke grid kabupaten
-                            onBackToHome = onBackToHome
+                            onBackToHome = onBackToHome // Kembali ke Home
                         )
                     }
                 }
@@ -252,16 +253,15 @@ fun HospitalListContent(
         Button(
             onClick = onBackToHome,
             colors = ButtonDefaults.buttonColors(
-                containerColor = White,
-                contentColor = AuthDarkGreen
+                containerColor = AuthDarkGreen,
+                contentColor = White
             ),
             shape = RoundedCornerShape(50.dp),
             modifier = Modifier
-                .fillMaxWidth(0.9f)
+                .fillMaxWidth(0.8f)
                 .height(50.dp)
-                .padding(vertical = 16.dp)
         ) {
-            Text("Kembali ke Main Menu", fontWeight = FontWeight.SemiBold)
+            Text("Kembali ke Main Menu", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
         }
     }
 }
@@ -332,11 +332,3 @@ fun CountyButton(county: String, onClick: () -> Unit, modifier: Modifier = Modif
 
 // --- Preview ---
 
-@Preview(showBackground = true)
-@Composable
-fun CareScreenPreview() {
-    CareScreen(
-        onBackToHome = {},
-        onCountySelected = {}
-    )
-}

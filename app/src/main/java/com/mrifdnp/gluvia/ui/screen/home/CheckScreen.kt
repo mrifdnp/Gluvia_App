@@ -59,7 +59,7 @@ fun getHospitalsForCounty(county: String): List<Hospital> {
 
 @Composable
 fun CheckScreen(
-    onBackToHome: () -> Unit,
+    onMenuClick: () -> Unit,
     onNavigateToCare: () -> Unit,
     viewModel: CheckViewModel = koinViewModel()
 ) {
@@ -73,7 +73,7 @@ fun CheckScreen(
 
     Scaffold(
         topBar = {
-            GluviaHeader(onMenuClick = onBackToHome, showTitle = false, backgroundColor = EduGreen)
+            GluviaHeader(onMenuClick = onMenuClick,  showTitle = false, backgroundColor = EduGreen)
         },
         containerColor = HeadGreen
     ) { paddingValues ->
@@ -142,7 +142,7 @@ fun CheckScreen(
                         glucoseValue = displayValue,
                         isNormal = isNormal,
                         onNavigateToCare = onNavigateToCare,
-                        onBackToHome = onBackToHome
+                        onBackToHome = onMenuClick
                     )
                 }
 
@@ -312,5 +312,5 @@ fun CheckActionButton(text: String, onClick: () -> Unit, isPrimary: Boolean) {
 @Preview(showBackground = true)
 @Composable
 fun CheckScreenPreview() {
-    CheckScreen(onBackToHome = {}, onNavigateToCare = {})
+    CheckScreen(onMenuClick = {}, onNavigateToCare = {})
 }

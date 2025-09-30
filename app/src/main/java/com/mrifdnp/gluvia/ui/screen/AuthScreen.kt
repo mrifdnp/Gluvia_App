@@ -975,7 +975,7 @@ fun SignUpFormContentPreview() {
 
 
 @Composable
-fun AuthFooter() {
+fun AuthFooter(modifier: Modifier = Modifier) {
     Box(
         modifier = Modifier
             .fillMaxWidth()

@@ -42,14 +42,15 @@ val SecondGreen = Color(0xFF068b6b)
 
 @Composable
 fun ProfileScreen(
-    onBackClick: () -> Unit,
+
+    onMenuClick: () -> Unit,
     onEditProfileClick: () -> Unit,
     viewModel: ProfileViewModel = koinViewModel()
 ) {
     Scaffold(
         topBar = {
             GluviaHeader(
-                onMenuClick = onBackClick,
+                onMenuClick = onMenuClick,
                 showTitle = true,
                 showLogo = false
             )
@@ -296,8 +297,3 @@ fun ProfileContent(
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun ProfileScreenPreview() {
-    ProfileScreen(onBackClick = {}, onEditProfileClick = {})
-}

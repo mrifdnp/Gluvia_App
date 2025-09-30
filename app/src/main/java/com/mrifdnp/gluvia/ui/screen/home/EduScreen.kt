@@ -1,5 +1,8 @@
 package com.mrifdnp.gluvia.ui.screen.home
 
+import android.util.Log
+import android.webkit.WebResourceError
+import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.compose.foundation.Image
@@ -9,48 +12,35 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.mrifdnp.gluvia.ui.screen.AuthDarkGreen
-import com.mrifdnp.gluvia.ui.screen.GluviaHeader
-import com.mrifdnp.gluvia.ui.screen.White
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.mrifdnp.gluvia.R
-import com.mrifdnp.gluvia.ui.screen.DarkGreen
-import com.mrifdnp.gluvia.ui.screen.WaveShapeBackground
+import com.mrifdnp.gluvia.ui.screen.*
 
-// Ambil warna yang sudah didefinisikan sebelumnya (diselaraskan dengan ProfileScreen)
-val EduGreen = Color(0xFF068b6b)
-// AuthDarkGreen dan White sudah tersedia
-val HeadGreen = Color(0xFF05ab83
-)
 @Composable
 fun EduScreen(
-    onBackClick: () -> Unit,
+    onMenuClick: () -> Unit,
+    onBackToHome: () -> Unit
 ) {
     var isVideoMode by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
-            GluviaHeader(onMenuClick = onBackClick, showTitle = false, backgroundColor = EduGreen)
+            GluviaHeader(onMenuClick = onMenuClick, showTitle = false, backgroundColor = EduGreen)
         },
-        containerColor = HeadGreen // 🔑 Background Scaffold menggunakan SecondGreen (EduGreen)
+        containerColor = HeadGreen
     ) { paddingValues ->
 
         val layoutDirection = LocalLayoutDirection.current
@@ -61,33 +51,20 @@ fun EduScreen(
             bottom = 0.dp
         )
 
-        // 🔑 CONTAINER UTAMA BERTUMPUK (SEPERTI PROFILE SCREEN)
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .then(columnPadding)
         ) {
-            // 1. Box Atas untuk Warna Header/Avatar (dari ProfileScreen)
+            // Background Header
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(90.dp)
-                    .background(color = AuthDarkGreen) // Warna hijau gelap di bagian atas
-
-            ){
-                Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp)
-                    .background(color = SecondGreen ) // Warna hijau gelap di bagian atas
-
+                    .background(color = AuthDarkGreen)
             )
 
-            }
-
-
-
-            // 2. GAMBAR LATAR BELAKANG DENGAN OPACITY RENDAH (Ditengahkan)
+            // Background Image
             Image(
                 painter = painterResource(id = R.drawable.edu),
                 contentDescription = null,
@@ -98,59 +75,56 @@ fun EduScreen(
                 contentScale = ContentScale.Fit
             )
 
-            // 3. WAVE FOOTER (Sama seperti ProfileScreen)
+            // Wave Footer
             WaveShapeBackground(
-                color = AuthDarkGreen, // Warna dasar dari box parent
-                waveColor = HeadGreen, // Warna gelombang
+                color = AuthDarkGreen,
+                waveColor = HeadGreen,
                 modifier = Modifier
                     .fillMaxWidth()
                     .fillMaxHeight(0.3f)
                     .align(Alignment.BottomCenter)
             )
 
-            // 4. KONTEN UTAMA (Yang bisa di-scroll)
+            // Konten Utama
             Column(
-                modifier = Modifier
+                modifier = if (isVideoMode) Modifier.fillMaxSize()
+                    .padding(horizontal = 24.dp)
+                else Modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 24.dp, )
+                    .padding(horizontal = 24.dp)
             ) {
-                // 🔑 LOGIKA PENGGANTIAN KONTEN
                 if (isVideoMode) {
-                    VideoModeContent(onBackToMenu = onBackClick)
+                    VideoModeContent(onBackToMenu = onBackToHome)
                 } else {
                     TextModeContent(
                         onWatchVideoClick = { isVideoMode = true }
                     )
                 }
-                // Spacer untuk memastikan scroll menjangkau seluruh Wave Footer
+
                 Spacer(modifier = Modifier.height(100.dp))
             }
         }
     }
 }
 
-// --- KOMPONEN MODE TEKS ---
-
+// ==================== TEXT MODE ====================
 @Composable
 private fun TextModeContent(onWatchVideoClick: () -> Unit) {
-    Column(
-        modifier = Modifier.fillMaxWidth()
-    ) {
-
+    Column(modifier = Modifier.fillMaxWidth()) {
         EduScreenTitle()
-        // 1. Judul Utama
+
         Text(
             text = "Diabetes Melitus",
             color = White,
             fontSize = 32.sp,
             fontWeight = FontWeight.ExtraBold,
-            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp, top = 20.dp),
-            textAlign = TextAlign.Center,
-
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp, top = 20.dp),
+            textAlign = TextAlign.Center
         )
 
-        // 2. Paragraf 1 (Definisi dan Komplikasi)
         Text(
             text = "Diabetes melitus adalah penyakit kronis akibat gangguan produksi atau kerja insulin, sehingga kadar gula darah meningkat. Jika tidak ditangani, kondisi ini dapat menyebabkan komplikasi serius seperti gangguan jantung dan kerusakan saraf.",
             color = White,
@@ -160,36 +134,31 @@ private fun TextModeContent(onWatchVideoClick: () -> Unit) {
             modifier = Modifier.padding(bottom = 24.dp)
         )
 
-        // 3. Paragraf 2 (Faktor Risiko dan Call to Action)
         Text(
             text = "Faktor risiko seperti pola makan tidak sehat, kurang aktivitas fisik, dan faktor genetik berperan besar dalam perkembangan diabetes. Untuk mengetahui lebih lanjut tentang definisi, gejala hingga cara pencegahan dan pengelolaannya, klik Lihat Video Edukasi sekarang dan dapatkan informasi penting untuk menjaga kesehatan anda. Berikut video edukasi mengenai diabetes melitus",
             color = White,
             fontSize = 16.sp,
             lineHeight = 24.sp,
             textAlign = TextAlign.Justify,
-            modifier = Modifier.padding(bottom = 40.dp) // 🔑 Spacer di sini cukup
+            modifier = Modifier.padding(bottom = 40.dp)
         )
 
-        // 4. Tombol Aksi (Lihat Video Edukasi)
         Button(
-            onClick = onWatchVideoClick, // Mengubah state di EduScreen
+            onClick = onWatchVideoClick,
             colors = ButtonDefaults.buttonColors(
                 containerColor = DarkGreen,
-                contentColor = com.mrifdnp.gluvia.ui.screen.home.White
+                contentColor = White
             ),
             shape = RoundedCornerShape(8.dp),
             modifier = Modifier
                 .fillMaxWidth()
                 .height(50.dp)
-            // 🔑 PERBAIKAN: Hapus padding bottom yang berlebihan di sini
         ) {
             Text("Lihat Video Edukasi", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
         }
-
-        // 🔑 HAPUS SPACER BERLEBIHAN di akhir: Spacer(modifier = Modifier.height(40.dp))
     }
 }
-// --- KOMPONEN MODE VIDEO ---
+
 @Composable
 private fun EduScreenTitle() {
     Text(
@@ -197,13 +166,17 @@ private fun EduScreenTitle() {
         color = White,
         fontSize = 40.sp,
         fontWeight = FontWeight.ExtraBold,
-        modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 24.dp)
     )
 }
+
+// ==================== VIDEO MODE ====================
 @Composable
 private fun VideoModeContent(onBackToMenu: () -> Unit) {
     Column(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         EduScreenTitle()
@@ -214,18 +187,22 @@ private fun VideoModeContent(onBackToMenu: () -> Unit) {
             modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp)
         )
 
-        // WebView untuk YouTube playlist
         AndroidView(
             factory = { context ->
                 WebView(context).apply {
                     webViewClient = WebViewClient()
                     settings.javaScriptEnabled = true
+                    isHorizontalScrollBarEnabled = false
+                    overScrollMode = WebView.OVER_SCROLL_NEVER
+                    settings.loadWithOverviewMode = true
+                    settings.useWideViewPort = true
+
                     loadUrl("https://www.youtube.com/playlist?list=PLBQtJ5KIa5fEYM06Z6Qm8Bl1ITui7dQRn")
                 }
             },
             modifier = Modifier
                 .fillMaxWidth()
-                .height(600.dp)
+                .height(500.dp)
         )
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -243,11 +220,6 @@ private fun VideoModeContent(onBackToMenu: () -> Unit) {
     }
 }
 
-
-@Preview(showBackground = true)
-@Composable
-fun EduScreenPreview() {
-    EduScreen(
-        onBackClick = {}
-    )
-}
+// ==================== WARNA ====================
+val EduGreen = Color(0xFF068b6b)
+val HeadGreen = Color(0xFF05ab83)

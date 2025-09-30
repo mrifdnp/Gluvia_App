@@ -72,6 +72,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.draw.clip
+import com.mrifdnp.gluvia.ui.screen.home.HeadGreen
 import com.mrifdnp.gluvia.ui.screen.home.SecondGreen
 import com.mrifdnp.gluvia.ui.theme.GaretFamily
 import kotlinx.coroutines.launch
@@ -85,7 +86,9 @@ fun HomeScreen(
     // Inject ViewModel
     viewModel: HomeViewModel = koinViewModel(),
     onLogout: () -> Unit,
-    onFeatureClick: (route: String) -> Unit
+    onFeatureClick: (route: String) -> Unit,
+    onMenuClick: () -> Unit
+
 
 ) {  val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
@@ -120,7 +123,7 @@ fun HomeScreen(
     Scaffold(
         topBar = {
             GluviaHeader(
-                onMenuClick = { scope.launch { drawerState.open() } },
+                onMenuClick = onMenuClick,
                 backgroundColor= SecondGreen,
             showTitle = false,
                 showLogo = true
@@ -136,13 +139,23 @@ fun HomeScreen(
             end = paddingValues.calculateEndPadding(layoutDirection),
             bottom = 0.dp
         )
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .then(columnPadding)
         ) {
 
-            Column(modifier = Modifier.weight(1f),) {
+            WaveShapeBackground(
+                color = AuthDarkGreen,
+                waveColor = White,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight(0.3f)
+                    .align(Alignment.BottomCenter)
+            )
+
+            Column()
+            {
                 HomeHeader(userName = viewModel.userName)
 
                 Box(
@@ -162,11 +175,14 @@ fun HomeScreen(
 
                     featureList = viewModel.featureCards,
                     onCardClick = onFeatureClick
+
                 )
+
+
             }
 
 
-            AuthFooter()
+
         }
     }
         }
@@ -465,8 +481,3 @@ fun WaveShapeBackground(color: Color,waveColor: Color,
 
 // ---
 
-@Preview(showBackground = true)
-@Composable
-fun HomeScreenPreview() {
-    HomeScreen(onLogout = {}, onFeatureClick = {})
-}

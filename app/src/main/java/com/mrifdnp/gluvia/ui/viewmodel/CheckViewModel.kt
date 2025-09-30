@@ -11,6 +11,7 @@ import com.mrifdnp.gluvia.data.CheckRecord
 import com.mrifdnp.gluvia.data.CheckRepository // Import CheckRepository yang sudah Anda buat
 import kotlinx.coroutines.launch
 import android.util.Log // Gunakan Logcat untuk debugging
+import com.mrifdnp.gluvia.data.DailyAverage
 import com.mrifdnp.gluvia.data.MonthlyAverage // 🔑 Import data class baru
 
 
@@ -71,6 +72,14 @@ class CheckViewModel(
     var monthlyChartData by mutableStateOf<List<MonthlyAverage>>(emptyList())
         private set
 
+    // 🔑 STATE BARU untuk Data Chart Harian
+    var dailyChartData by mutableStateOf<List<DailyAverage>>(emptyList())
+        private set
+
+    // 🔑 STATE BARU untuk menentukan apakah data sudah dimuat
+    var isLoadingChartData by mutableStateOf(true)
+        private set
+
     init {
         // Panggil fungsi untuk memuat data historis saat ViewModel dibuat
         loadChartData()
@@ -79,24 +88,25 @@ class CheckViewModel(
     // 🔑 FUNGSI BARU: Memuat data historis untuk grafik
     private fun loadChartData() {
         viewModelScope.launch {
+            isLoadingChartData = true // Mulai loading
+
+            // Muat Data Bulanan
             checkRepository.getMonthlyAverageGlucose().onSuccess { data ->
-                monthlyChartData = data // Perbarui state untuk grafik
-
-                // 🔑 LOGIK LOGCAT BARU DIMULAI DI SINI
-                Log.i("GLUVI_TRACK_LOG", "--- LOG RIWAYAT GLUKOSA BULANAN ---")
-                if (data.isEmpty()) {
-                    Log.i("GLUVI_TRACK_LOG", "Data riwayat glukosa kosong.")
-                } else {
-                    data.forEach { monthlyAvg ->
-                        Log.i("GLUVI_TRACK_LOG", "Bulan: ${monthlyAvg.monthLabel} | Rata-Rata Glukosa: ${String.format("%.2f", monthlyAvg.averageGlucose)} mg/dL")
-                    }
-                }
-                Log.i("GLUVI_TRACK_LOG", "--- LOG SELESAI ---")
-                // 🔑 LOGIK LOGCAT BARU SELESAI DI SINI
-
+                monthlyChartData = data
             }.onFailure { e ->
-                Log.e("CheckViewModel", "Gagal memuat data grafik: ${e.message}")
+                Log.e("CheckViewModel", "Gagal memuat data bulanan: ${e.message}")
             }
+
+            // 🔑 Muat Data Harian
+            checkRepository.getDailyAverageGlucose().onSuccess { data ->
+                dailyChartData = data
+            }.onFailure { e ->
+                Log.e("CheckViewModel", "Gagal memuat data harian: ${e.message}")
+            }
+
+            isLoadingChartData = false // Loading selesai
+
+            // 🔑 (Opsional) Tambahkan kembali logika logcat di sini jika diperlukan
         }
     }
 

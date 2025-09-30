@@ -32,7 +32,7 @@ import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun SettingsScreen(
-    onBackClick: () -> Unit,
+    onMenuClick: () -> Unit,
     onNavigateToProfile: () -> Unit,
     profileViewModel: ProfileViewModel = koinViewModel(),
 ) {
@@ -41,7 +41,7 @@ fun SettingsScreen(
     Scaffold(
         topBar = {
             GluviaHeader(
-                onMenuClick = onBackClick,
+                onMenuClick = onMenuClick,
                 showTitle = true,
                 showLogo = false,
 
@@ -286,8 +286,3 @@ fun RowScope.ActionButtonStyle(
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun SettingsScreenPreview() {
-    SettingsScreen(onBackClick = {}, onNavigateToProfile = {})
-}

@@ -94,5 +94,6 @@ dependencies {
     implementation("io.github.jan-tennert.supabase:storage-kt:2.4.0")
     // 🔑 Tambahkan library Coil untuk loading gambar dari URL
     implementation("io.coil-kt:coil-compose:2.6.0")
+    implementation("com.pierfrancescosoffritti.androidyoutubeplayer:core:12.1.0")
 
 }
