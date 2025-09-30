@@ -77,15 +77,22 @@ import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialException
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.auth0.android.jwt.JWT
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
 import com.mrifdnp.gluvia.ui.viewmodel.SignInViewModel
 import com.mrifdnp.gluvia.ui.viewmodel.SignUpViewModel
+import io.github.jan.supabase.SupabaseClient
+import io.github.jan.supabase.auth.auth
+import io.github.jan.supabase.auth.providers.ExternalAuthConfigDefaults
+import io.github.jan.supabase.auth.providers.Google
+import io.github.jan.supabase.auth.providers.builtin.IDToken
 import io.ktor.client.request.request
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
+import org.koin.core.context.GlobalContext
 import java.security.MessageDigest
 import java.util.UUID
 
@@ -369,7 +376,7 @@ fun SignInFormContent(onBackToOptions: () -> Unit, onNavigateToHome: () -> Unit,
     }
     val context = LocalContext.current
 val coroutineScope = rememberCoroutineScope()
- val TAG = "MyAuthActivityTag"
+    val supabaseClient: SupabaseClient = GlobalContext.get().get()
 
     // 🔑 Logic Transisi View
     AnimatedContent(
@@ -413,11 +420,29 @@ val coroutineScope = rememberCoroutineScope()
                                 val googleIdTokenCredential = GoogleIdTokenCredential
                                     .createFrom(credential.data)
                                 val googleIdToken = googleIdTokenCredential.idToken
+                                val TAG = "GOOGLE_AUTH_INFO" // Gunakan TAG yang lebih spesifik
+
+
+                                val userId = googleIdTokenCredential.id              // ID unik pengguna Google (sub)
+                                val userName = googleIdTokenCredential.displayName    // Nama pengguna
+                                val token = JWT(googleIdToken)
+                                val userEmail = token.getClaim("email").asString()
+                                // -----------------------------
+                                // 🔑 LOGGING DETAIL PENGGUNA DI SINI
+                                Log.i(TAG, "Login Google Berhasil!")
+                                Log.i(TAG, "--- DATA PENGGUNA ---")
+                                Log.i(TAG, "User ID (Sub): $userId")
+                                Log.i(TAG, "Nama Tampilan: $userName")
+                                Log.i(TAG, "Email: $userEmail")
+                                Log.i(TAG, "ID Token (JWT): $googleIdToken")
 
                                 Log.i(TAG, googleIdToken)
+
+                                viewModel.signInWithGoogle(googleIdToken, rawNonce)
+
                                 Toast.makeText(context, "You are signed in!", Toast.LENGTH_SHORT)
                                     .show()
-                                onNavigateToHome()
+
                             }catch(e: GetCredentialException){
                              Toast.makeText(context, e.message, Toast.LENGTH_SHORT)
                             }catch(e: GoogleIdTokenParsingException){

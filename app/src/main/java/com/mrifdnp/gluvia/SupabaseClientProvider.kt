@@ -24,6 +24,7 @@ object SupabaseClientProvider {
                 alwaysAutoRefresh = true
             }
             install(Postgrest)
+
         }
         Log.i(TAG, "🟢 Supabase Client TERHUBUNG dan modul Auth/Postgrest terinstal.")
 

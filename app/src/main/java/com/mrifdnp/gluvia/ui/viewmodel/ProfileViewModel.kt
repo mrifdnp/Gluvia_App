@@ -19,6 +19,9 @@ class ProfileViewModel(private val profileRepository: ProfileRepository) : ViewM
     var username by mutableStateOf("Memuat...")
         private set
 
+    var profileImageUrl by mutableStateOf<String?>(null)
+        private set
+
     var profileCreationDate by mutableStateOf("Memuat...")
         private set
 
@@ -50,7 +53,7 @@ class ProfileViewModel(private val profileRepository: ProfileRepository) : ViewM
             profileRepository.getProfile().onSuccess { profile ->
                 username = profile.username
                 description = profile.description ?: "Belum ada deskripsi."
-
+                profileImageUrl = profile.avatarUrl
                 // Format tanggal dari Supabase (contoh: ISO 8601)
                 profileCreationDate = profile.createdAt?.let { isoTime ->
                     try {
