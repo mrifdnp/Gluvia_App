@@ -86,9 +86,13 @@ dependencies {
 
     implementation("androidx.credentials:credentials:1.6.0-alpha05")
     implementation("androidx.credentials:credentials-play-services-auth:1.6.0-alpha05")
-    implementation("com.google.android.libraries.identity.googleid:googleid:ght 1.1.1")
+    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
 
 
     implementation( "com.auth0.android:jwtdecode:2.0.2")
+
+    implementation("io.github.jan-tennert.supabase:storage-kt:2.4.0")
+    // 🔑 Tambahkan library Coil untuk loading gambar dari URL
+    implementation("io.coil-kt:coil-compose:2.6.0")
 
 }

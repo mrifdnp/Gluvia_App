@@ -2,18 +2,24 @@
 
 package com.mrifdnp.gluvia.data
 
+import android.util.Log
 import com.mrifdnp.gluvia.data.AuthRepository // Untuk mendapatkan user ID
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.exceptions.RestException
+import io.github.jan.supabase.storage.storage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.util.UUID
+
+
 
 class ProfileRepository(
     private val supabaseClient: SupabaseClient,
     private val authRepository: AuthRepository
 ) {
     private val TABLE_NAME = "profiles"
+    private val AVATAR_BUCKET = "avatars"
 
     // 1. READ (Ambil Data Profil)
     suspend fun getProfile(): Result<Profile> {
@@ -43,23 +49,36 @@ class ProfileRepository(
     }
 
     // 2. UPDATE (Perbarui Deskripsi)
-    suspend fun updateDescription(newDescription: String): Result<Unit> {
-        return withContext(Dispatchers.IO) {
-            val userId = authRepository.getCurrentUserId()
-            if (userId == null) return@withContext Result.failure(Exception("Pengguna tidak login"))
+    suspend fun updateProfile(
+        newUsername: String,
+        newDescription: String,
+        avatarBytes: ByteArray?
+    ): Result<String?> = withContext(Dispatchers.IO) {
+        val userId = authRepository.getCurrentUserId()
+            ?: return@withContext Result.failure(Exception("Pengguna tidak login"))
 
-            try {
-                supabaseClient.postgrest[TABLE_NAME]
-                    .update(
-                        value = mapOf("description" to newDescription)
-                    ) {
-                        filter { eq("id", userId) }
-                    }
-                Result.success(Unit)
-            } catch (e: Exception) {
-                Result.failure(e)
+        try {
+            var avatarUrl: String? = null
+            if (avatarBytes != null) {
+                val fileName = "avatar_${userId}_${UUID.randomUUID()}.jpg"
+                supabaseClient.storage.from(AVATAR_BUCKET).upload(fileName, avatarBytes)
+                avatarUrl = supabaseClient.storage.from(AVATAR_BUCKET).publicUrl(fileName)
             }
+
+            val updateData = ProfileUpdate(
+                username = newUsername,
+                description = newDescription,
+                avatarUrl = avatarUrl
+            )
+            supabaseClient.postgrest[TABLE_NAME].update(updateData) {
+                filter { eq("id", userId) }
+            }
+
+            Result.success(avatarUrl)
+        } catch (e: Exception) {
+            Log.e("ProfileRepository", "Gagal update profile", e)
+            Result.failure(e)
         }
     }
+
 }
-// Catatan: Anda harus menambahkan getCurrentUserId() ke AuthRepository!

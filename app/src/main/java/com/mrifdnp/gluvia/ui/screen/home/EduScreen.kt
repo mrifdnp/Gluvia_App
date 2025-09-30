@@ -1,5 +1,7 @@
 package com.mrifdnp.gluvia.ui.screen.home
 
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -28,6 +30,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.viewinterop.AndroidView
 import com.mrifdnp.gluvia.R
 import com.mrifdnp.gluvia.ui.screen.DarkGreen
 import com.mrifdnp.gluvia.ui.screen.WaveShapeBackground
@@ -200,22 +203,42 @@ private fun EduScreenTitle() {
 @Composable
 private fun VideoModeContent(onBackToMenu: () -> Unit) {
     Column(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         EduScreenTitle()
-        Text(text = "Video Edukasi", color = White, fontSize = 26.sp,  modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp))
+        Text(
+            text = "Video Edukasi",
+            color = White,
+            fontSize = 26.sp,
+            modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp)
+        )
+
+        // WebView untuk YouTube playlist
+        AndroidView(
+            factory = { context ->
+                WebView(context).apply {
+                    webViewClient = WebViewClient()
+                    settings.javaScriptEnabled = true
+                    loadUrl("https://www.youtube.com/playlist?list=PLBQtJ5KIa5fEYM06Z6Qm8Bl1ITui7dQRn")
+                }
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(600.dp)
+        )
 
         Spacer(modifier = Modifier.height(24.dp))
-        Box(modifier = Modifier.fillMaxWidth().height(220.dp).background(Color.Gray.copy(alpha = 0.5f)), contentAlignment = Alignment.Center) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center, modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.5f))) {
-                Icon(painter = painterResource(id = R.drawable.ic_google), contentDescription = "Play Video", tint = White, modifier = Modifier.size(64.dp))
-            }
-        }
-        Column(modifier = Modifier.fillMaxWidth().padding(top = 40.dp, bottom = 40.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Button(onClick = onBackToMenu, colors = ButtonDefaults.buttonColors(containerColor = AuthDarkGreen, contentColor = White), shape = RoundedCornerShape(50.dp), modifier = Modifier.fillMaxWidth(0.8f).height(50.dp)) {
-                Text("Kembali ke Main Menu", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
-            }
+
+        Button(
+            onClick = onBackToMenu,
+            colors = ButtonDefaults.buttonColors(containerColor = AuthDarkGreen, contentColor = White),
+            shape = RoundedCornerShape(50.dp),
+            modifier = Modifier
+                .fillMaxWidth(0.8f)
+                .height(50.dp)
+        ) {
+            Text("Kembali ke Main Menu", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
         }
     }
 }

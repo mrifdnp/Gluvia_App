@@ -24,6 +24,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.mrifdnp.gluvia.ui.screen.menu.ProfileScreen
 import com.mrifdnp.gluvia.ui.screen.AuthScreen
+import com.mrifdnp.gluvia.ui.screen.menu.SettingsScreen
 import com.mrifdnp.gluvia.ui.viewmodel.AppState
 import com.mrifdnp.gluvia.ui.viewmodel.MainViewModel
 import org.koin.androidx.compose.koinViewModel
@@ -48,7 +49,7 @@ const val SCREEN_CHECK = "check"
 const val SCREEN_TRACK = "track"
 const val SCREEN_CARE = "care"
 const val SCREEN_PROFILE = "profile_route"
-
+const val SCREEN_SETTING = "settings_route"
 
 @Composable
 fun MainNavigation(mainViewModel: MainViewModel = koinViewModel()) { // 🔑 Inject MainViewModel
@@ -171,6 +172,12 @@ fun MainNavigation(mainViewModel: MainViewModel = koinViewModel()) { // 🔑 Inj
             ProfileScreen(
                 onBackClick = { navController.popBackStack() },
                 onEditProfileClick = { /* Navigasi ke Edit Screen */ }
+            )
+        }
+        composable(SCREEN_SETTING) {
+            SettingsScreen(
+                onBackClick = { navController.popBackStack() },
+                onNavigateToProfile = { navController.navigate(SCREEN_PROFILE) }
             )
         }
     }

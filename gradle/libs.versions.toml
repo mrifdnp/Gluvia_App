@@ -23,6 +23,7 @@ postgrest-kt = { module = "io.github.jan-tennert.supabase:postgrest-kt" }
 realtime-kt = { module = "io.github.jan-tennert.supabase:realtime-kt" }
 auth-kt = { module = "io.github.jan-tennert.supabase:auth-kt" }
 gotrue-kt = { module = "io.github.jan-tennert.supabase:gotrue-kt", version.ref = "gotrue" }
+supabase-storage = { module = "io.github.jan-tennert.supabase:storage-kt" } # 🔑 TAMBAHAN: Untuk Avatar Upload
 
 
 ktor-client-android = { module = "io.ktor:ktor-client-android", version.ref = "ktorClientAndroid" }

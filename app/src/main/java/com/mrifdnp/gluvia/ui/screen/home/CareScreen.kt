@@ -6,25 +6,19 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.mrifdnp.gluvia.R // Pastikan R diimpor
+import com.mrifdnp.gluvia.R
 import com.mrifdnp.gluvia.ui.screen.GluviaHeader
 import com.mrifdnp.gluvia.ui.screen.WaveShapeBackground
 import androidx.compose.ui.draw.alpha
@@ -33,29 +27,31 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalLayoutDirection
 import com.mrifdnp.gluvia.ui.screen.AuthDarkGreen
 import com.mrifdnp.gluvia.ui.screen.LinkColor
-
+// 🔑 Import Data
+import com.mrifdnp.gluvia.data.Hospital // Import data class Hospital
+import com.mrifdnp.gluvia.data.getHospitalsForCounty // Import fungsi data
+import com.mrifdnp.gluvia.ui.screen.White // Asumsi Warna White diimpor
 
 // Warna yang digunakan (Diselaraskan dengan CheckScreen/ProfileScreen)
 
 @Composable
 fun CareScreen(
     onBackToHome: () -> Unit,
-    onCountySelected: (county: String) -> Unit
+    onCountySelected: (county: String) -> Unit = {} // Parameter ini tidak digunakan di sini lagi
 ) {
 
     var selectedCounty by remember { mutableStateOf<String?>(null) }
 
-    // 🔑 MODIFIKASI: Aksi saat county diklik (mengubah state)
-    val onCountySelected: (county: String) -> Unit = { county ->
+    // 🔑 Handler untuk berpindah ke tampilan daftar rumah sakit
+    val onCountyClicked: (county: String) -> Unit = { county ->
         selectedCounty = county
     }
 
     Scaffold(
         topBar = {
-            // Kita set showTitle=true agar header terlihat sama dengan Check/ProfileScreen
             GluviaHeader(onMenuClick = onBackToHome, showTitle = false, backgroundColor = SecondGreen)
         },
-        containerColor = HeadGreen // 🔑 Background dasar Scaffold menggunakan SecondGreen
+        containerColor = HeadGreen
     ) { paddingValues ->
 
         val layoutDirection = LocalLayoutDirection.current
@@ -66,71 +62,67 @@ fun CareScreen(
             bottom = 0.dp
         )
 
-        // 🔑 CONTAINER UTAMA BERTUMPUK (BOX)
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .then(contentPadding)
         ) {
 
-            // 1. Box Atas untuk Warna Header (dari Check/ProfileScreen)
+            // 1. Box Atas untuk Warna Header
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(90.dp)
-                    .background(color = AuthDarkGreen) // Warna hijau gelap di bagian atas
-
+                    .background(color = AuthDarkGreen)
             ){
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp)
-                        .background(color = SecondGreen ) // Warna hijau gelap di bagian atas
-
+                        .background(color = SecondGreen )
                 )
-
             }
 
-            // 🔑 PERUBAHAN DI SINI: Menggunakan R.drawable.edu dengan alpha 0.5f (50%)
+            // 2. GAMBAR LATAR BELAKANG DENGAN OPACITY RENDAH
             Image(
-                painter = painterResource(id = R.drawable.care), // 🔑 MENGGUNAKAN EDU.PNG
+                painter = painterResource(id = R.drawable.care), // Asumsi R.drawable.care ada
                 contentDescription = null,
                 modifier = Modifier
-                    .size(300.dp) // Ukuran bisa disesuaikan
+                    .size(300.dp)
                     .align(Alignment.Center)
-                    .alpha(0.5f), // 🔑 OPACITY 50%
+                    .alpha(0.5f),
                 contentScale = ContentScale.Fit
             )
 
-            // 3. WAVE FOOTER (Sama seperti ProfileScreen)
+            // 3. WAVE FOOTER
             WaveShapeBackground(
-                color = AuthDarkGreen, // Warna dasar gelombang
-                waveColor = HeadGreen, // Warna yang muncul di bawah gelombang
+                color = AuthDarkGreen,
+                waveColor = HeadGreen,
                 modifier = Modifier
                     .fillMaxWidth()
                     .fillMaxHeight(0.3f)
                     .align(Alignment.BottomCenter)
             )
 
-            // 4. KONTEN UTAMA (Di atas semua latar belakang)
+            // 4. KONTEN UTAMA
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Sisa konten CareScreen
-
                 // Spacer untuk mengimbangi Box Header/TopBar
                 Spacer(modifier = Modifier.height(32.dp))
 
                 // 1. Judul Layar
                 CareHeader()
+
+                // 🔑 LOGIC PERGANTIAN VIEW
                 when (val county = selectedCounty) {
                     null -> {
                         // --- VIEW 1: PILIH KABUPATEN ---
                         Text(text = "KABUPATEN", color = White, fontSize = 28.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.padding(top = 32.dp, bottom = 24.dp))
-                        CountyGrid(onCountySelected = onCountySelected)
+                        CountyGrid(onCountySelected = onCountyClicked)
                         Spacer(modifier = Modifier.height(60.dp))
                     }
                     else -> {
@@ -138,18 +130,17 @@ fun CareScreen(
                         HospitalListContent(
                             countyName = county,
                             hospitalList = getHospitalsForCounty(county),
+                            onBackToList = { selectedCounty = null }, // Kembali ke grid kabupaten
                             onBackToHome = onBackToHome
                         )
                     }
                 }
-
-                Spacer(modifier = Modifier.height(60.dp))
             }
         }
     }
 }
 
-// --- Komponen Pembantu (Dipertahankan) ---
+// --- Komponen Pembantu ---
 
 @Composable
 fun CareHeader() {
@@ -216,20 +207,26 @@ fun CountyGrid(onCountySelected: (county: String) -> Unit) {
 fun HospitalListContent(
     countyName: String,
     hospitalList: List<Hospital>,
+    onBackToList: () -> Unit, // Handler baru untuk kembali ke daftar kabupaten
     onBackToHome: () -> Unit
 ) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 24.dp), // Padding untuk selaraskan dengan header
+            .padding(horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Judul Fasilitas (Sesuai Mockup)
+        // Tombol Kembali ke Daftar Kabupaten
+        TextButton(onClick = onBackToList) {
+            Text("← Kembali ke Daftar Kabupaten", color = White)
+        }
+
+        // Judul Fasilitas
         Text(
             text = "FASILITAS KESEHATAN",
             color = White,
             fontSize = 28.sp,
-
+            fontWeight = FontWeight.ExtraBold,
             modifier = Modifier.padding(top = 16.dp)
         )
         // Nama Kabupaten
@@ -237,17 +234,21 @@ fun HospitalListContent(
             text = countyName,
             color = White,
             fontSize = 18.sp,
-
+            fontWeight = FontWeight.SemiBold,
             modifier = Modifier.padding(bottom = 32.dp)
         )
 
         // Daftar Kartu
-        hospitalList.forEach { hospital ->
-            HospitalCard(hospital = hospital)
-            Spacer(modifier = Modifier.height(16.dp))
+        if (hospitalList.isEmpty()) {
+            Text("Tidak ada data fasilitas kesehatan yang tersedia.", color = White, textAlign = TextAlign.Center)
+        } else {
+            hospitalList.forEach { hospital ->
+                HospitalCard(hospital = hospital)
+                Spacer(modifier = Modifier.height(16.dp))
+            }
         }
 
-        // Tombol Kembali
+        // Tombol Kembali ke Main Menu
         Button(
             onClick = onBackToHome,
             colors = ButtonDefaults.buttonColors(
@@ -266,12 +267,8 @@ fun HospitalListContent(
 }
 
 
-// --- Komponen Pembantu (Dipertahankan) ---
-
 @Composable
 fun HospitalCard(hospital: Hospital) {
-    // Gunakan Icons.Filled.Phone dan Icons.Filled.LocationOn
-    // ... (Implementasi HospitalCard dari jawaban sebelumnya) ...
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
@@ -282,6 +279,7 @@ fun HospitalCard(hospital: Hospital) {
             modifier = Modifier.fillMaxWidth().padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // Gambar Rumah Sakit Placeholder
             Image(
                 painter = painterResource(id = hospital.imageResId),
                 contentDescription = hospital.name,
@@ -297,18 +295,16 @@ fun HospitalCard(hospital: Hospital) {
             Column(
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(text = hospital.name, color = White, fontSize = 18.sp, )
+                Text(text = hospital.name, color = White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    // Ikon Phone Placeholder
-                    Text("📞", color = LinkColor, modifier = Modifier.size(16.dp))
+                    Text("📞", color = LinkColor, modifier = Modifier.size(16.dp)) // Placeholder Icon
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(text = hospital.phone, color = White, fontSize = 14.sp)
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    // Ikon Location Placeholder
-                    Text("📍", color = LinkColor, modifier = Modifier.size(16.dp))
+                    Text("📍", color = LinkColor, modifier = Modifier.size(16.dp)) // Placeholder Icon
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(text = hospital.address, color = White, fontSize = 14.sp)
                 }
@@ -330,7 +326,7 @@ fun CountyButton(county: String, onClick: () -> Unit, modifier: Modifier = Modif
         modifier = modifier
             .height(50.dp)
     ) {
-        Text(county, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+        Text(county, fontWeight = FontWeight.SemiBold, fontSize = 16.sp, textAlign = TextAlign.Center)
     }
 }
 

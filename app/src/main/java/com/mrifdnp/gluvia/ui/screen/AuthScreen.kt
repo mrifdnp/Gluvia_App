@@ -103,17 +103,98 @@ val ButtonColor = Color(0xFFF1F1F1)
 
 
 
-
 enum class AuthScreenState {
     SIGN_UP_OPTIONS,
     SIGN_UP_FORM,
     SIGN_IN_FORM
 }
 
+// 🔑 KOMPONEN GOOGLE AUTH EXECUTOR
+@Composable
+fun GoogleAuthExecutor(
+    viewModel: SignInViewModel, // HANYA MENGGUNAKAN SIGN IN VIEW MODEL
+    onAuthSuccess: (token: String, nonce: String) -> Unit
+) {
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+
+    // Logic untuk Nonce dan Request
+    val rawNonce = remember { UUID.randomUUID().toString() }
+    val hashedNonce = remember(rawNonce) {
+        val digest = MessageDigest.getInstance("SHA-256")
+        digest.digest(rawNonce.toByteArray()).fold("") { str, it -> str + "%02x".format(it) }
+    }
+
+    val googleIdOption = remember(hashedNonce) {
+        GetGoogleIdOption.Builder()
+            .setFilterByAuthorizedAccounts(false)
+            .setServerClientId("931575962864-056lr271sgjfiiadp8m9su27832e3hev.apps.googleusercontent.com")
+            .setNonce(hashedNonce)
+            .build()
+    }
+
+    val request = remember(googleIdOption) {
+        GetCredentialRequest.Builder()
+            .addCredentialOption(googleIdOption)
+            .build()
+    }
+
+    // Gunakan LaunchedEffect untuk memicu proses otentikasi
+    LaunchedEffect(viewModel) {
+        coroutineScope.launch {
+            try {
+                val credentialsManager = CredentialManager.create(context)
+                val result = credentialsManager.getCredential(
+                    request = request,
+                    context = context,
+                )
+
+                val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(result.credential.data)
+                val googleIdToken = googleIdTokenCredential.idToken
+
+                onAuthSuccess(googleIdToken, rawNonce)
+                Toast.makeText(context, "Google Auth Berhasil!", Toast.LENGTH_SHORT).show()
+
+            } catch(e: GetCredentialException) {
+                Log.e("GOOGLE_AUTH", "GetCredentialException: ${e.message}")
+                Toast.makeText(context, "Gagal otentikasi Google: ${e.message}", Toast.LENGTH_LONG).show()
+            } catch(e: GoogleIdTokenParsingException) {
+                Log.e("GOOGLE_AUTH", "ParsingException: ${e.message}")
+                Toast.makeText(context, "Terjadi kesalahan parsing token.", Toast.LENGTH_SHORT).show()
+            } catch(e: Exception) {
+                Log.e("GOOGLE_AUTH", "General Exception: ${e.message}")
+                Toast.makeText(context, "Terjadi kesalahan umum.", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+    // Tampilan Loading
+    CircularProgressIndicator(modifier = Modifier.size(32.dp).padding(vertical = 16.dp), color = AuthDarkGreen)
+}
+
 
 @Composable
 fun AuthScreen(onNavigateToHome: () -> Unit = {}, ) {
     var currentScreenState by remember { mutableStateOf(AuthScreenState.SIGN_UP_OPTIONS) }
+
+    // State sementara untuk memicu Auth Executor
+    var triggerGoogleAuth by remember { mutableStateOf(false) }
+
+    // Ambil ViewModels
+    val signUpViewModel: SignUpViewModel = koinViewModel()
+    val signInViewModel: SignInViewModel = koinViewModel()
+
+    // Set Navigasi Home pada kedua ViewModels
+    LaunchedEffect(Unit) {
+        signInViewModel.onNavigateToHome = onNavigateToHome
+        signUpViewModel.onNavigateToHome = onNavigateToHome
+    }
+
+    // 🔑 Lambda untuk memicu Google Auth, selalu menggunakan SignInViewModel
+    val onGoogleAuthClick = {
+        triggerGoogleAuth = true
+    }
+
+
     Scaffold(
         topBar = { GluviaHeader(onMenuClick = {}, showLogo = false) },
         containerColor = White
@@ -125,7 +206,7 @@ fun AuthScreen(onNavigateToHome: () -> Unit = {}, ) {
             start = paddingValues.calculateStartPadding(layoutDirection),
             top = paddingValues.calculateTopPadding(),
             end = paddingValues.calculateEndPadding(layoutDirection),
-            bottom = 0.dp // Tetap set 0.dp agar footer menempel
+            bottom = 0.dp
         )
 
         Column(
@@ -138,57 +219,62 @@ fun AuthScreen(onNavigateToHome: () -> Unit = {}, ) {
                 targetState = currentScreenState,
                 modifier = Modifier.weight(1f),
                 transitionSpec = {
-                    // Animasi: slide in/out dari kanan ke kiri, dan fade in/out
                     (slideInHorizontally { fullWidth -> fullWidth } + fadeIn())
                         .togetherWith(slideOutHorizontally { fullWidth -> -fullWidth } + fadeOut())
                 },
                 label = "AuthScreenTransition"
             ) { targetState ->
+
                 when (targetState) {
                     AuthScreenState.SIGN_UP_OPTIONS -> {
-
                         AuthContent(
                             onEmailSignUpClick = {
                                 currentScreenState = AuthScreenState.SIGN_UP_FORM
                             },
-                            onGoogleSignUpClick = {
-                                // Contoh: langsung ke form atau ke proses Google
-                                currentScreenState = AuthScreenState.SIGN_UP_FORM
-                            },
+                            // 🔑 Tombol Sign Up Google memicu Auth
+                            onGoogleSignUpClick = onGoogleAuthClick,
                             onLoginClick = {
                                 currentScreenState = AuthScreenState.SIGN_IN_FORM
                             },
-                              onRegisterClick = {
+                            onRegisterClick = {
                                 currentScreenState = AuthScreenState.SIGN_UP_OPTIONS
                             }
 
                         )
                     }
                     AuthScreenState.SIGN_UP_FORM -> {
-                        // ViewModel secara otomatis disediakan oleh viewModel()
                         SignUpFormContent(
-                            onBackToOptions = {
-                                currentScreenState = AuthScreenState.SIGN_UP_OPTIONS
-                            },
+                            onBackToOptions = { currentScreenState = AuthScreenState.SIGN_UP_OPTIONS },
                             onNavigateToHome = onNavigateToHome,
-                            onNavigateToSignIn = {
-                                currentScreenState = AuthScreenState.SIGN_IN_FORM
-                            }
+                            onNavigateToSignIn = { currentScreenState = AuthScreenState.SIGN_IN_FORM }
                         )
                     }
                     AuthScreenState.SIGN_IN_FORM -> {
                         SignInFormContent(
-                            onBackToOptions = {
-                                currentScreenState = AuthScreenState.SIGN_UP_OPTIONS
-                            },
-                            onRegisterClick = {
-                                currentScreenState = AuthScreenState.SIGN_UP_OPTIONS
-                            },
-                            onNavigateToHome = onNavigateToHome
+                            onBackToOptions = { currentScreenState = AuthScreenState.SIGN_UP_OPTIONS },
+                            onRegisterClick = { currentScreenState = AuthScreenState.SIGN_UP_OPTIONS },
+                            onNavigateToHome = onNavigateToHome,
+                            // 🔑 Tombol Login Google memicu Auth
+
                         )
                     }
                 }
             }
+
+            // 🔑 EXECUTION LAYER UNTUK GOOGLE AUTH
+            if (triggerGoogleAuth) {
+                Box(modifier = Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
+                    GoogleAuthExecutor(
+                        viewModel = signInViewModel, // SELALU MENGGUNAKAN SIGN IN VIEW MODEL
+                        onAuthSuccess = { token, nonce ->
+                            // Panggil signInWithGoogle di SignInViewModel untuk semua kasus Google
+                            signInViewModel.signInWithGoogle(token, nonce)
+                            triggerGoogleAuth = false
+                        }
+                    )
+                }
+            }
+
 
             // Area Footer (Akan muncul tepat di bawah AuthContent)
             AuthFooter()

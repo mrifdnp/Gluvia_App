@@ -77,17 +77,18 @@ class ProfileViewModel(private val profileRepository: ProfileRepository) : ViewM
         println("Navigasi ke Edit Profile")
     }
 
-    // Fungsi untuk Update
-    fun saveNewDescription(newDescription: String) {
+
+    fun saveProfile(newUsername: String, newDescription: String, avatarBytes: ByteArray?) {
         viewModelScope.launch {
-            isLoading = true
-            profileRepository.updateDescription(newDescription).onSuccess {
-                description = newDescription // Update UI lokal
+            profileRepository.updateProfile(newUsername, newDescription, avatarBytes).onSuccess { avatarUrl ->
+                username = newUsername
+                description = newDescription
+                avatarUrl?.let { profileImageUrl = it } // update avatar kalau ada
             }.onFailure { e ->
-                errorMessage = "Gagal menyimpan: ${e.message}"
+                errorMessage = "Gagal menyimpan profil: ${e.message}"
             }
-            isLoading = false
         }
     }
+
 
 }

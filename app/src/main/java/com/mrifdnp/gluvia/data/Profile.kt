@@ -17,3 +17,13 @@ data class Profile(
     @SerialName("created_at")
     val createdAt: String? = null // Supabase timestamp
 )
+
+@Serializable
+data class ProfileUpdate(
+    @SerialName("username")
+    val username: String,
+    @SerialName("description")
+    val description: String? = null,
+    @SerialName("avatar_url")
+    val avatarUrl: String? = null
+)
