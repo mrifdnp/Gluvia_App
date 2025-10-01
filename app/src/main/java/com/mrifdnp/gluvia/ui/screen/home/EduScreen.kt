@@ -1,22 +1,18 @@
 package com.mrifdnp.gluvia.ui.screen.home
 
-import android.util.Log
-import android.webkit.WebResourceError
-import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -44,7 +40,7 @@ fun EduScreen(
     ) { paddingValues ->
 
         val layoutDirection = LocalLayoutDirection.current
-        val columnPadding = Modifier.padding(
+        val paddingModifier = Modifier.padding(
             start = paddingValues.calculateStartPadding(layoutDirection),
             top = paddingValues.calculateTopPadding(),
             end = paddingValues.calculateEndPadding(layoutDirection),
@@ -54,7 +50,7 @@ fun EduScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .then(columnPadding)
+                .then(paddingModifier)
         ) {
             // Background Header
             Box(
@@ -85,24 +81,33 @@ fun EduScreen(
                     .align(Alignment.BottomCenter)
             )
 
-            // Konten Utama
+            // ================= FIXED HEADER + SCROLLABLE CONTENT =================
             Column(
-                modifier = if (isVideoMode) Modifier.fillMaxSize()
-                    .padding(horizontal = 24.dp)
-                else Modifier
+                modifier = Modifier
                     .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
                     .padding(horizontal = 24.dp)
             ) {
-                if (isVideoMode) {
-                    VideoModeContent(onBackToMenu = onBackToHome)
-                } else {
-                    TextModeContent(
-                        onWatchVideoClick = { isVideoMode = true }
-                    )
-                }
+                // Header Gluvi-Edu tetap di atas
+                EduScreenTitle()
 
-                Spacer(modifier = Modifier.height(100.dp))
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Konten scrollable
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    if (isVideoMode) {
+                        VideoModeContent(onBackToMenu = onBackToHome)
+                    } else {
+                        TextModeContent(
+                            onWatchVideoClick = { isVideoMode = true }
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(100.dp))
+                }
             }
         }
     }
@@ -112,8 +117,6 @@ fun EduScreen(
 @Composable
 private fun TextModeContent(onWatchVideoClick: () -> Unit) {
     Column(modifier = Modifier.fillMaxWidth()) {
-        EduScreenTitle()
-
         Text(
             text = "Diabetes Melitus",
             color = White,
@@ -179,12 +182,13 @@ private fun VideoModeContent(onBackToMenu: () -> Unit) {
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        EduScreenTitle()
         Text(
             text = "Video Edukasi",
             color = White,
             fontSize = 26.sp,
-            modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 24.dp)
         )
 
         AndroidView(
@@ -223,3 +227,4 @@ private fun VideoModeContent(onBackToMenu: () -> Unit) {
 // ==================== WARNA ====================
 val EduGreen = Color(0xFF068b6b)
 val HeadGreen = Color(0xFF05ab83)
+val DarkGreen = Color(0xFF057b61)
