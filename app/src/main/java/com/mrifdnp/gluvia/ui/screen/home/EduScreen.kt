@@ -92,21 +92,21 @@ fun EduScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Konten scrollable
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
-                ) {
-                    if (isVideoMode) {
-                        VideoModeContent(onBackToMenu = onBackToHome)
-                    } else {
+                if (isVideoMode) {
+                    // Jangan pakai verticalScroll di sini
+                    VideoModeContent(onBackToMenu = onBackToHome)
+                } else {
+                    // Teks bisa discroll
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState())
+                    ) {
                         TextModeContent(
                             onWatchVideoClick = { isVideoMode = true }
                         )
+                        Spacer(modifier = Modifier.height(100.dp))
                     }
-
-                    Spacer(modifier = Modifier.height(100.dp))
                 }
             }
         }
@@ -206,7 +206,7 @@ private fun VideoModeContent(onBackToMenu: () -> Unit) {
             },
             modifier = Modifier
                 .fillMaxWidth()
-                .height(500.dp)
+                .height(450.dp)
         )
 
         Spacer(modifier = Modifier.height(24.dp))
